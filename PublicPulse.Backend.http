@@ -1,0 +1,4 @@
+@PublicPulse_Backend_HostAddress = http://localhost:5000
+
+GET {{PublicPulse_Backend_HostAddress}}/health
+Accept: application/json
