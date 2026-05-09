@@ -15,6 +15,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapEndpointGroups();
+app.MapEndpoints();
 
 app.Run();

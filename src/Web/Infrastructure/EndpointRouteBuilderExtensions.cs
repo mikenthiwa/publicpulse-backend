@@ -2,21 +2,27 @@ namespace Web.Infrastructure;
 
 public static class EndpointRouteBuilderExtensions
 {
-    public static WebApplication MapEndpointGroups(this WebApplication app)
+    public static IEndpointRouteBuilder MapGet(
+        this IEndpointRouteBuilder builder,
+        Delegate handler,
+        string pattern = "")
     {
-        var endpointGroupType = typeof(EndpointGroupBase);
-        var assembly = typeof(EndpointGroupBase).Assembly;
+        builder
+            .MapGet(pattern, handler)
+            .WithName(handler.Method.Name);
 
-        var endpointGroups = assembly.GetExportedTypes()
-            .Where(type => type.IsSubclassOf(endpointGroupType))
-            .Select(Activator.CreateInstance)
-            .Cast<EndpointGroupBase>();
+        return builder;
+    }
 
-        foreach (var group in endpointGroups)
-        {
-            group.Map(app);
-        }
+    public static IEndpointRouteBuilder MapPost(
+        this IEndpointRouteBuilder builder,
+        Delegate handler,
+        string pattern = "")
+    {
+        builder
+            .MapPost(pattern, handler)
+            .WithName(handler.Method.Name);
 
-        return app;
+        return builder;
     }
 }

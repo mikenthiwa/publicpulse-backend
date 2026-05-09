@@ -7,19 +7,24 @@ public class Health : EndpointGroupBase
 {
     public override void Map(WebApplication app)
     {
-        app.MapGet("/health", () =>
-        {
-            var databaseConnectionString = app.Configuration.GetConnectionString("DefaultConnection");
+        app.MapGroup(this)
+            .MapGet(GetHealth);
 
-            var data = new HealthStatus(
-                Status: "Healthy",
-                DatabaseConfigured: !string.IsNullOrWhiteSpace(databaseConnectionString),
-                CheckedAtUtc: DateTimeOffset.UtcNow);
-
-            return Results.Ok(ApiResponse<HealthStatus>.Ok(data, "PublicPulse API is running."));
-        })
+        app.MapGet("/health", GetHealth)
         .WithName("HealthCheck")
         .WithTags("Health");
+    }
+
+    private static IResult GetHealth(IConfiguration configuration)
+    {
+        var databaseConnectionString = configuration.GetConnectionString("DefaultConnection");
+
+        var data = new HealthStatus(
+            Status: "Healthy",
+            DatabaseConfigured: !string.IsNullOrWhiteSpace(databaseConnectionString),
+            CheckedAtUtc: DateTimeOffset.UtcNow);
+
+        return Results.Ok(ApiResponse<HealthStatus>.Ok(data, "PublicPulse API is running."));
     }
 }
 
