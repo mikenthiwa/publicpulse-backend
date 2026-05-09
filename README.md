@@ -25,7 +25,7 @@ dotnet build PublicPulse.Backend.sln
 Run the API:
 
 ```bash
-ASPNETCORE_URLS=http://localhost:5000 dotnet run --project src/PublicPulse.Backend.csproj
+ASPNETCORE_URLS=http://localhost:5000 dotnet run --project src/Web/Web.csproj
 ```
 
 Health check:
@@ -49,8 +49,8 @@ Copy `.env.example` into your local environment manager or export the values in 
 ## Project Structure
 
 - `PublicPulse.Backend.sln` - Solution file
-- `src/Program.cs` - API startup and minimal endpoints
-- `src/Modules/Issues` - Placeholder for issue and report features
-- `src/Modules/Users` - Placeholder for user features
-- `src/Modules/Comments` - Placeholder for comment features
-- `src/Modules/InfrastructureCategories` - Placeholder for category features
+- `src/Web/Program.cs` - API startup and minimal endpoints
+- `src/Web/Modules/Issues` - Placeholder for issue and report features
+- `src/Web/Modules/Users` - Placeholder for user features
+- `src/Web/Modules/Comments` - Placeholder for comment features
+- `src/Web/Modules/InfrastructureCategories` - Placeholder for category features
