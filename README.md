@@ -13,13 +13,19 @@
 Restore dependencies:
 
 ```bash
-dotnet restore
+dotnet restore PublicPulse.Backend.sln
+```
+
+Build the solution:
+
+```bash
+dotnet build PublicPulse.Backend.sln
 ```
 
 Run the API:
 
 ```bash
-ASPNETCORE_URLS=http://localhost:5000 dotnet run
+ASPNETCORE_URLS=http://localhost:5000 dotnet run --project src/PublicPulse.Backend.csproj
 ```
 
 Health check:
@@ -42,8 +48,9 @@ Copy `.env.example` into your local environment manager or export the values in 
 
 ## Project Structure
 
-- `Program.cs` - API startup and minimal endpoints
-- `Modules/Issues` - Placeholder for issue and report features
-- `Modules/Users` - Placeholder for user features
-- `Modules/Comments` - Placeholder for comment features
-- `Modules/InfrastructureCategories` - Placeholder for category features
+- `PublicPulse.Backend.sln` - Solution file
+- `src/Program.cs` - API startup and minimal endpoints
+- `src/Modules/Issues` - Placeholder for issue and report features
+- `src/Modules/Users` - Placeholder for user features
+- `src/Modules/Comments` - Placeholder for comment features
+- `src/Modules/InfrastructureCategories` - Placeholder for category features

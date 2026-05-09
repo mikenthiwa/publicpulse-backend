@@ -4,6 +4,7 @@ obj/
 *.suo
 .vs/
 .vscode/
+.idea/
 .env
 .env.*
 !.env.example
