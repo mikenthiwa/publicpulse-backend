@@ -22,3 +22,5 @@ app.UseExceptionHandler();
 app.MapEndpoints();
 
 app.Run();
+
+public partial class Program;

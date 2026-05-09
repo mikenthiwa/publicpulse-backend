@@ -73,8 +73,6 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         string detail)
     {
         httpContext.Response.StatusCode = statusCode;
-        httpContext.Response.ContentType = "application/problem+json";
-
         var problemDetails = new ProblemDetails
         {
             Status = statusCode,
@@ -85,6 +83,10 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
 
         problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? httpContext.TraceIdentifier;
 
-        return httpContext.Response.WriteAsJsonAsync(problemDetails);
+        return httpContext.Response.WriteAsJsonAsync(
+            problemDetails,
+            options: null,
+            contentType: "application/problem+json",
+            cancellationToken: default);
     }
 }
