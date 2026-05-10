@@ -8,7 +8,7 @@
 
 - Restore dependencies: `dotnet restore PublicPulse.Backend.sln`.
 - Build the solution: `dotnet build PublicPulse.Backend.sln`.
-- Run the API: `ASPNETCORE_URLS=http://localhost:5000 dotnet run --project src/PublicPulse.Backend.csproj`.
+- Run the API: `ASPNETCORE_URLS=http://localhost:5000 dotnet run --project src/Web/Web.csproj`.
 - Verify the health endpoint: `curl http://localhost:5000/health`.
 
 # Testing

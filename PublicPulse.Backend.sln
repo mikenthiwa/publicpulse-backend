@@ -5,7 +5,13 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PublicPulse.Backend", "src\PublicPulse.Backend.csproj", "{63ECEFE6-1AF4-4D8B-97EE-1488D0CFBC0A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web", "src\Web\Web.csproj", "{63ECEFE6-1AF4-4D8B-97EE-1488D0CFBC0A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D0F6F459-93B1-4F53-AAA3-19323E24165D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web.UnitTests", "tests\Web.UnitTests\Web.UnitTests.csproj", "{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web.IntegrationTests", "tests\Web.IntegrationTests\Web.IntegrationTests.csproj", "{075246A0-42E5-4068-B431-11C3B6509092}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{23699DD5-8D05-45F6-A81B-305C7BC28F13}"
 	ProjectSection(SolutionItems) = preProject
@@ -14,6 +20,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitignore = .gitignore
 		agents.md = agents.md
 		CAPSTONE.md = CAPSTONE.md
+		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -39,11 +47,37 @@ Global
 		{63ECEFE6-1AF4-4D8B-97EE-1488D0CFBC0A}.Release|x64.Build.0 = Release|Any CPU
 		{63ECEFE6-1AF4-4D8B-97EE-1488D0CFBC0A}.Release|x86.ActiveCfg = Release|Any CPU
 		{63ECEFE6-1AF4-4D8B-97EE-1488D0CFBC0A}.Release|x86.Build.0 = Release|Any CPU
+		{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01}.Debug|x64.Build.0 = Debug|Any CPU
+		{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01}.Debug|x86.Build.0 = Debug|Any CPU
+		{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01}.Release|x64.ActiveCfg = Release|Any CPU
+		{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01}.Release|x64.Build.0 = Release|Any CPU
+		{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01}.Release|x86.ActiveCfg = Release|Any CPU
+		{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01}.Release|x86.Build.0 = Release|Any CPU
+		{075246A0-42E5-4068-B431-11C3B6509092}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{075246A0-42E5-4068-B431-11C3B6509092}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{075246A0-42E5-4068-B431-11C3B6509092}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{075246A0-42E5-4068-B431-11C3B6509092}.Debug|x64.Build.0 = Debug|Any CPU
+		{075246A0-42E5-4068-B431-11C3B6509092}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{075246A0-42E5-4068-B431-11C3B6509092}.Debug|x86.Build.0 = Debug|Any CPU
+		{075246A0-42E5-4068-B431-11C3B6509092}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{075246A0-42E5-4068-B431-11C3B6509092}.Release|Any CPU.Build.0 = Release|Any CPU
+		{075246A0-42E5-4068-B431-11C3B6509092}.Release|x64.ActiveCfg = Release|Any CPU
+		{075246A0-42E5-4068-B431-11C3B6509092}.Release|x64.Build.0 = Release|Any CPU
+		{075246A0-42E5-4068-B431-11C3B6509092}.Release|x86.ActiveCfg = Release|Any CPU
+		{075246A0-42E5-4068-B431-11C3B6509092}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{63ECEFE6-1AF4-4D8B-97EE-1488D0CFBC0A} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{2FCE71D9-B08B-4248-9AAA-E4B3A42BFC01} = {D0F6F459-93B1-4F53-AAA3-19323E24165D}
+		{075246A0-42E5-4068-B431-11C3B6509092} = {D0F6F459-93B1-4F53-AAA3-19323E24165D}
 	EndGlobalSection
 EndGlobal
