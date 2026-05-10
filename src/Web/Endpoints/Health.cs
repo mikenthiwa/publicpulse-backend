@@ -1,5 +1,6 @@
 using Web.Contracts;
 using Web.Infrastructure;
+using Web.Infrastructure.Persistence;
 
 namespace Web.Endpoints;
 
@@ -15,17 +16,36 @@ public class Health : EndpointGroupBase
         .WithTags("Health");
     }
 
-    private static IResult GetHealth(IConfiguration configuration)
+    private static async Task<IResult> GetHealth(
+        IConfiguration configuration,
+        IDatabaseHealthCheck databaseHealthCheck,
+        CancellationToken cancellationToken)
     {
         var databaseConnectionString = configuration.GetConnectionString("DefaultConnection");
+        var databaseConfigured = !string.IsNullOrWhiteSpace(databaseConnectionString);
+        var databaseConnected = databaseConfigured
+            && await databaseHealthCheck.CanConnectAsync(cancellationToken);
+        var status = databaseConnected ? "Healthy" : "Unhealthy";
 
         var data = new HealthStatus(
-            Status: "Healthy",
-            DatabaseConfigured: !string.IsNullOrWhiteSpace(databaseConnectionString),
+            Status: status,
+            DatabaseConfigured: databaseConfigured,
+            DatabaseConnected: databaseConnected,
             CheckedAtUtc: DateTimeOffset.UtcNow);
 
-        return Results.Ok(ApiResponse<HealthStatus>.Ok(data, "PublicPulse API is running."));
+        var response = new ApiResponse<HealthStatus>(
+            Success: databaseConnected,
+            Message: "PublicPulse API health check completed.",
+            Data: data);
+
+        return databaseConnected
+            ? Results.Ok(response)
+            : Results.Json(response, statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 }
 
-public sealed record HealthStatus(string Status, bool DatabaseConfigured, DateTimeOffset CheckedAtUtc);
+public sealed record HealthStatus(
+    string Status,
+    bool DatabaseConfigured,
+    bool DatabaseConnected,
+    DateTimeOffset CheckedAtUtc);

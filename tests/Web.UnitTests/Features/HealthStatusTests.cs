@@ -13,10 +13,12 @@ public sealed class HealthStatusTests
         var status = new HealthStatus(
             Status: "Healthy",
             DatabaseConfigured: true,
+            DatabaseConnected: true,
             CheckedAtUtc: checkedAtUtc);
 
         status.Status.Should().Be("Healthy");
         status.DatabaseConfigured.Should().BeTrue();
+        status.DatabaseConnected.Should().BeTrue();
         status.CheckedAtUtc.Should().Be(checkedAtUtc);
     }
 }
