@@ -39,6 +39,10 @@ Configure the local PostgreSQL connection string with .NET user secrets:
 ```bash
 dotnet user-secrets init --project src/Web/Web.csproj
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=publicpulse;Username=postgres;Password=postgres" --project src/Web/Web.csproj
+dotnet user-secrets set "Jwt:Issuer" "PublicPulse" --project src/Web/Web.csproj
+dotnet user-secrets set "Jwt:Audience" "PublicPulse" --project src/Web/Web.csproj
+dotnet user-secrets set "Jwt:SigningKey" "replace-with-a-long-random-development-signing-key" --project src/Web/Web.csproj
+dotnet user-secrets set "Jwt:ExpiryMinutes" "60" --project src/Web/Web.csproj
 ```
 
 Run the API:
@@ -94,6 +98,43 @@ dotnet ef database update --project src/Web/Web.csproj --startup-project src/Web
 
 The `/health` endpoint checks PostgreSQL connectivity and returns `503 Service Unavailable` when the database cannot be reached.
 
+## Authentication
+
+The MVP uses local email/password accounts with JWT bearer tokens.
+
+Required JWT settings:
+
+| Setting | Description |
+| --- | --- |
+| `Jwt:Issuer` | Token issuer |
+| `Jwt:Audience` | Token audience |
+| `Jwt:SigningKey` | Long signing key used to sign tokens |
+| `Jwt:ExpiryMinutes` | Token lifetime in minutes |
+
+Register and login:
+
+```http
+POST /api/Auth/register
+POST /api/Auth/login
+```
+
+Use the returned token as a bearer token for authenticated endpoints:
+
+```http
+Authorization: Bearer <token>
+```
+
+## MVP Endpoints
+
+- `GET /api/Categories` - list seeded report categories.
+- `POST /api/Reports` - create a report, authenticated.
+- `GET /api/Reports` - list public reports.
+- `GET /api/Reports/{id}` - get public report details.
+- `POST /api/Reports/{id}/confirmations` - anonymously confirm/upvote a report.
+- `PUT /api/Reports/{id}/status` - update report status, authenticated creator only.
+
+Report responses are public and do not expose creator identity.
+
 ## Testing
 
 The solution has two test projects:
@@ -116,15 +157,18 @@ Copy `.env.example` into your local environment manager or export the values in 
 | `ASPNETCORE_ENVIRONMENT` | Runtime environment, usually `Development` locally |
 | `ASPNETCORE_URLS` | Local URL binding for the API |
 | `ConnectionStrings__DefaultConnection` | PostgreSQL connection string |
+| `Jwt__Issuer` | JWT token issuer |
+| `Jwt__Audience` | JWT token audience |
+| `Jwt__SigningKey` | JWT signing key |
+| `Jwt__ExpiryMinutes` | JWT token lifetime in minutes |
 
 ## Project Structure
 
 - `PublicPulse.Backend.sln` - Solution file
 - `src/Web/Program.cs` - API startup and minimal endpoints
 - `src/Web/Infrastructure/Persistence` - EF Core DbContext and migrations
-- `src/Web/Features/Issues` - Placeholder for issue and report features
-- `src/Web/Features/Users` - Placeholder for user features
-- `src/Web/Features/Comments` - Placeholder for comment features
-- `src/Web/Features/InfrastructureCategories` - Placeholder for category features
+- `src/Web/Features/Auth` - Registration, login, and JWT token services
+- `src/Web/Features/Categories` - Report category model and contracts
+- `src/Web/Features/Reports` - Reports, confirmations, status, and report service
 - `tests/Web.UnitTests` - Unit tests for records, helpers, and isolated behavior
 - `tests/Web.IntegrationTests` - Integration tests for HTTP endpoints and API middleware

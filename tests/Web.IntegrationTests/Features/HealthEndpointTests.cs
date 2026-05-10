@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Web.Infrastructure.Persistence;
@@ -13,43 +12,29 @@ public sealed class HealthEndpointTests
     [Fact]
     public async Task GetHealth_WhenDatabaseIsUnavailable_ShouldReturnServiceUnavailable()
     {
-        var previousDefaultConnection = Environment.GetEnvironmentVariable(TestConnectionStrings.DefaultConnectionKey);
-        Environment.SetEnvironmentVariable(
-            TestConnectionStrings.DefaultConnectionKey,
-            TestConnectionStrings.DefaultConnection);
-
-        try
-        {
-            await using var factory = new WebApplicationFactory<Program>()
-                .WithWebHostBuilder(builder =>
+        await using var factory = new TestWebApplicationFactory()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureServices(services =>
                 {
-                    builder.ConfigureServices(services =>
-                    {
-                        services.Replace(ServiceDescriptor.Scoped<IDatabaseHealthCheck, UnavailableDatabaseHealthCheck>());
-                    });
+                    services.Replace(ServiceDescriptor.Scoped<IDatabaseHealthCheck, UnavailableDatabaseHealthCheck>());
                 });
+            });
 
-            using var client = factory.CreateClient();
+        using var client = factory.CreateClient();
 
-            var response = await client.GetAsync("/health", TestContext.Current.CancellationToken);
+        var response = await client.GetAsync("/health", TestContext.Current.CancellationToken);
 
-            response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
 
-            var body = await response.Content.ReadFromJsonAsync<HealthResponse>(
-                TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadFromJsonAsync<HealthResponse>(
+            TestContext.Current.CancellationToken);
 
-            body.Should().NotBeNull();
-            body!.Success.Should().BeFalse();
-            body.Data.DatabaseConfigured.Should().BeTrue();
-            body.Data.DatabaseConnected.Should().BeFalse();
-            body.Data.Status.Should().Be("Unhealthy");
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable(
-                TestConnectionStrings.DefaultConnectionKey,
-                previousDefaultConnection);
-        }
+        body.Should().NotBeNull();
+        body!.Success.Should().BeFalse();
+        body.Data.DatabaseConfigured.Should().BeTrue();
+        body.Data.DatabaseConnected.Should().BeFalse();
+        body.Data.Status.Should().Be("Unhealthy");
     }
 
     private sealed record HealthResponse(bool Success, string Message, HealthData Data);
