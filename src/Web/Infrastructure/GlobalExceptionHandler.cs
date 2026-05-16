@@ -11,6 +11,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         { typeof(KeyNotFoundException), HandleNotFoundException },
         { typeof(ArgumentException), HandleBadRequestException },
         { typeof(InvalidOperationException), HandleBadRequestException },
+        { typeof(UnauthorizedAccessException), HandleForbiddenException },
     };
 
     public async ValueTask<bool> TryHandleAsync(
@@ -48,6 +49,15 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             httpContext,
             StatusCodes.Status400BadRequest,
             "Bad request.",
+            exception.Message);
+    }
+
+    private static Task HandleForbiddenException(HttpContext httpContext, Exception exception)
+    {
+        return WriteProblemDetails(
+            httpContext,
+            StatusCodes.Status403Forbidden,
+            "Forbidden.",
             exception.Message);
     }
 
