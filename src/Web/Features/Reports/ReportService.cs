@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using Web.Domain.Entities;
 using Web.Infrastructure.Persistence;
 
 namespace Web.Features.Reports;

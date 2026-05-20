@@ -1,3 +1,5 @@
+using Web.Domain.Enums;
+
 namespace Web.Features.Reports;
 
 public sealed record CreateReportRequest(

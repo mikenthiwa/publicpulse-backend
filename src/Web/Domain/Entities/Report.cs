@@ -1,7 +1,6 @@
-using Web.Features.Auth;
-using Web.Features.Categories;
+using Web.Domain.Enums;
 
-namespace Web.Features.Reports;
+namespace Web.Domain.Entities;
 
 public sealed class Report
 {

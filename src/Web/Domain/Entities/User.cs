@@ -1,4 +1,4 @@
-namespace Web.Features.Auth;
+namespace Web.Domain.Entities;
 
 public sealed class User
 {

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Web.Domain.Entities;
 using Web.Features.Auth;
 using Web.Features.Reports;
 using Web.Infrastructure;

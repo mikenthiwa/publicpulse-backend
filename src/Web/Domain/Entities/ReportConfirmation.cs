@@ -1,4 +1,4 @@
-namespace Web.Features.Reports;
+namespace Web.Domain.Entities;
 
 public sealed class ReportConfirmation
 {

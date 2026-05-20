@@ -1,6 +1,4 @@
-using Web.Features.Reports;
-
-namespace Web.Features.Categories;
+namespace Web.Domain.Entities;
 
 public sealed class Category
 {

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Web.Domain.Entities;
 using Web.Infrastructure.Persistence;
 
 namespace Web.Features.Auth;

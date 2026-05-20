@@ -1,6 +1,4 @@
-using Web.Features.Auth;
-
-namespace Web.Features.Reports;
+namespace Web.Domain.Entities;
 
 public sealed class ReportImageUpload
 {
