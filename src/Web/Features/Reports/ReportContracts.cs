@@ -32,7 +32,7 @@ public sealed record ReportListItemResponse(
     string RoadName,
     ReportStatus Status,
     int ConfirmationCount,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset Created);
 
 public sealed record ReportResponse(
     Guid Id,
@@ -45,7 +45,7 @@ public sealed record ReportResponse(
     string RoadName,
     ReportStatus Status,
     int ConfirmationCount,
-    DateTimeOffset CreatedAtUtc,
-    DateTimeOffset? UpdatedAtUtc);
+    DateTimeOffset Created,
+    DateTimeOffset? LastModified);
 
 public sealed record ConfirmReportResponse(Guid ReportId, int ConfirmationCount);

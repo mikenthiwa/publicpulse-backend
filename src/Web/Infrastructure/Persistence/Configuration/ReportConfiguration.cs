@@ -30,6 +30,9 @@ public sealed class ReportConfiguration : IEntityTypeConfiguration<Report>
             .HasMaxLength(200)
             .IsRequired();
 
+        builder.Property(r => r.CreatedBy)
+            .IsRequired();
+
         builder.HasOne(r => r.Category)
             .WithMany(category => category.Reports)
             .HasForeignKey(r => r.CategoryId)
@@ -37,7 +40,7 @@ public sealed class ReportConfiguration : IEntityTypeConfiguration<Report>
 
         builder.HasOne(r => r.CreatedByUser)
             .WithMany()
-            .HasForeignKey(r => r.CreatedByUserId)
+            .HasForeignKey(r => r.CreatedBy)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

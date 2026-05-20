@@ -49,7 +49,7 @@ public sealed class ReportServiceTests
             PhotoUrl = "https://example.com/photo.jpg",
             County = "Nairobi",
             RoadName = "Kenyatta Avenue",
-            CreatedByUserId = creator.Id
+            CreatedBy = creator.Id
         };
         dbContext.Users.AddRange(creator, otherUser);
         dbContext.Categories.Add(category);

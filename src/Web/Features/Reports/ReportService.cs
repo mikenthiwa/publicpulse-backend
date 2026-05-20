@@ -58,7 +58,7 @@ public sealed class ReportService(
             PhotoUrl = request.PhotoUrl.Trim(),
             County = request.County.Trim(),
             RoadName = request.RoadName.Trim(),
-            CreatedByUserId = userId
+            CreatedBy = userId
         };
 
         dbContext.Reports.Add(report);
@@ -75,7 +75,7 @@ public sealed class ReportService(
     {
         return await dbContext.Reports
             .AsNoTracking()
-            .OrderByDescending(report => report.CreatedAtUtc)
+            .OrderByDescending(report => report.Created)
             .Select(report => new ReportListItemResponse(
                 report.Id,
                 report.Title,
@@ -85,7 +85,7 @@ public sealed class ReportService(
                 report.RoadName,
                 report.Status,
                 report.Confirmations.Count,
-                report.CreatedAtUtc))
+                report.Created))
             .ToListAsync(cancellationToken);
     }
 
@@ -145,13 +145,13 @@ public sealed class ReportService(
             throw new KeyNotFoundException("Report was not found.");
         }
 
-        if (report.CreatedByUserId != userId)
+        if (report.CreatedBy != userId)
         {
             throw new UnauthorizedAccessException("Only the report creator can update status.");
         }
 
         report.Status = request.Status;
-        report.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        report.LastModified = DateTimeOffset.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -171,8 +171,8 @@ public sealed class ReportService(
             report.RoadName,
             report.Status,
             confirmationCount,
-            report.CreatedAtUtc,
-            report.UpdatedAtUtc);
+            report.Created,
+            report.LastModified);
     }
 
     private static void ValidateCreateReportRequest(CreateReportRequest request)

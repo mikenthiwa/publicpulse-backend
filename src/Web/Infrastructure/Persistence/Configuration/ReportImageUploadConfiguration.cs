@@ -24,6 +24,9 @@ public sealed class ReportImageUploadConfiguration : IEntityTypeConfiguration<Re
             .HasMaxLength(255)
             .IsRequired();
 
+        builder.Property(upload => upload.CreatedBy)
+            .IsRequired();
+
         builder.HasIndex(upload => upload.ImageKey)
             .IsUnique();
 
@@ -32,7 +35,7 @@ public sealed class ReportImageUploadConfiguration : IEntityTypeConfiguration<Re
 
         builder.HasOne(upload => upload.CreatedByUser)
             .WithMany()
-            .HasForeignKey(upload => upload.CreatedByUserId)
+            .HasForeignKey(upload => upload.CreatedBy)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

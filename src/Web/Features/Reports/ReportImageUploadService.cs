@@ -58,7 +58,7 @@ public sealed class ReportImageUploadService(
             ContentType = request.ContentType.Trim(),
             ContentLength = request.ContentLength,
             OriginalFileName = Path.GetFileName(request.FileName.Trim()),
-            CreatedByUserId = userId,
+            CreatedBy = userId,
             ExpiresAtUtc = expiresAtUtc
         });
 
@@ -79,7 +79,7 @@ public sealed class ReportImageUploadService(
         var trimmedImageUrl = imageUrl.Trim();
         var issuedUpload = await dbContext.ReportImageUploads
             .SingleOrDefaultAsync(
-                upload => upload.ImageUrl == trimmedImageUrl && upload.CreatedByUserId == userId,
+                upload => upload.ImageUrl == trimmedImageUrl && upload.CreatedBy == userId,
                 cancellationToken);
 
         if (issuedUpload is null)
