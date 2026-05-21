@@ -11,30 +11,6 @@ namespace Web.UnitTests.Features.Reports;
 public sealed class ReportServiceTests
 {
     [Fact]
-    public async Task CreateAsync_WithMissingTitle_ShouldThrowArgumentException()
-    {
-        await using var dbContext = CreateDbContext();
-        var user = CreateUser();
-        dbContext.Users.Add(user);
-        dbContext.Categories.Add(CreateCategory());
-        await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
-        var service = new ReportService(dbContext, new StubReportImageUploadService());
-
-        var action = async () => await service.CreateAsync(
-            new CreateReportRequest(
-                "",
-                "Description",
-                Category.RoadsId,
-                "https://example.com/photo.jpg",
-                "Nairobi",
-                "Kenyatta Avenue"),
-            CreatePrincipal(user.Id),
-            CancellationToken.None);
-
-        await action.Should().ThrowAsync<ArgumentException>();
-    }
-
-    [Fact]
     public async Task UpdateStatusAsync_WhenUserIsNotCreator_ShouldThrowUnauthorizedAccessException()
     {
         await using var dbContext = CreateDbContext();
@@ -43,7 +19,6 @@ public sealed class ReportServiceTests
         var category = CreateCategory();
         var report = new Report
         {
-            Title = "Pothole",
             Description = "Large pothole",
             CategoryId = category.Id,
             PhotoUrl = "https://example.com/photo.jpg",

@@ -10,10 +10,6 @@ public sealed class ReportConfiguration : IEntityTypeConfiguration<Report>
     {
         builder.ToTable("Reports");
 
-        builder.Property(r => r.Title)
-            .HasMaxLength(150)
-            .IsRequired();
-
         builder.Property(r => r.Description)
             .HasMaxLength(2000)
             .IsRequired();

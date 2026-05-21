@@ -52,7 +52,6 @@ public sealed class ReportService(
 
         var report = new Report
         {
-            Title = request.Title.Trim(),
             Description = request.Description.Trim(),
             CategoryId = request.CategoryId,
             PhotoUrl = request.PhotoUrl.Trim(),
@@ -78,7 +77,6 @@ public sealed class ReportService(
             .OrderByDescending(report => report.Created)
             .Select(report => new ReportListItemResponse(
                 report.Id,
-                report.Title,
                 report.CategoryId,
                 report.Category.Name,
                 report.County,
@@ -162,7 +160,6 @@ public sealed class ReportService(
     {
         return new ReportResponse(
             report.Id,
-            report.Title,
             report.Description,
             report.CategoryId,
             report.Category.Name,
@@ -177,11 +174,6 @@ public sealed class ReportService(
 
     private static void ValidateCreateReportRequest(CreateReportRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Title))
-        {
-            throw new ArgumentException("Title is required.");
-        }
-
         if (string.IsNullOrWhiteSpace(request.Description))
         {
             throw new ArgumentException("Description is required.");

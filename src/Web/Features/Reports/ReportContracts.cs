@@ -3,7 +3,6 @@ using Web.Domain.Enums;
 namespace Web.Features.Reports;
 
 public sealed record CreateReportRequest(
-    string Title,
     string Description,
     Guid CategoryId,
     string PhotoUrl,
@@ -25,7 +24,6 @@ public sealed record UpdateReportStatusRequest(ReportStatus Status);
 
 public sealed record ReportListItemResponse(
     Guid Id,
-    string Title,
     Guid CategoryId,
     string CategoryName,
     string County,
@@ -36,7 +34,6 @@ public sealed record ReportListItemResponse(
 
 public sealed record ReportResponse(
     Guid Id,
-    string Title,
     string Description,
     Guid CategoryId,
     string CategoryName,

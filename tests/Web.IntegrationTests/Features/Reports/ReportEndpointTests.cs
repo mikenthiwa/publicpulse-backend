@@ -54,20 +54,6 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
     }
 
     [Fact]
-    public async Task CreateReport_WithMissingTitle_ShouldReturnBadRequest()
-    {
-        await AuthenticateAsync("invalid-report@example.com");
-        var upload = await CreateImageUploadAsync();
-
-        var response = await _client.PostAsJsonAsync(
-            "/api/Reports",
-            CreateReportRequest(upload.ImageUrl, title: ""),
-            TestContext.Current.CancellationToken);
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
     public async Task CreateImageUploadUrl_WithTokenAndValidMetadata_ShouldReturnUploadTarget()
     {
         await AuthenticateAsync("image-upload@example.com");
@@ -401,12 +387,9 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             TestContext.Current.CancellationToken);
     }
 
-    private static CreateReportRequest CreateReportRequest(
-        string photoUrl,
-        string title = "Large pothole")
+    private static CreateReportRequest CreateReportRequest(string photoUrl)
     {
         return new CreateReportRequest(
-            title,
             "A large pothole is damaging vehicles.",
             Category.RoadsId,
             photoUrl,
