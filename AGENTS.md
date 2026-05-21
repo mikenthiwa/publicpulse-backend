@@ -11,6 +11,20 @@
 - Run the API: `ASPNETCORE_URLS=http://localhost:5000 dotnet run --project src/Web/Web.csproj`.
 - Verify the health endpoint: `curl http://localhost:5000/health`.
 
+# Architecture
+
+- `src/Web/Domain/Common` contains shared domain base types, such as `BaseAuditableEntity`.
+- `src/Web/Domain/Entities` contains persisted domain entities.
+- `src/Web/Domain/Enums` contains domain enums, such as `ReportStatus`.
+- `src/Web/Features/*` contains feature services, request/response contracts, options, and feature-specific behavior.
+- `src/Web/Endpoints` contains minimal API endpoint groups.
+- `src/Web/Infrastructure/Persistence` contains EF Core persistence, including `ApplicationDbContext`, migrations, and entity configuration.
+- Keep domain entities free of endpoint, service, and transport concerns.
+- Keep EF entity mapping in `Infrastructure/Persistence/Configuration`, one entity configuration per file.
+- Do not duplicate EF entity mapping in `ApplicationDbContext`; register entity configurations there.
+- Use migrations for EF model changes.
+- Keep API request/response contracts in feature folders, not in domain entities.
+
 # Testing
 
 - No test project exists yet.
