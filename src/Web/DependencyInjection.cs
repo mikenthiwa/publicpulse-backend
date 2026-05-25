@@ -8,6 +8,7 @@ using Web.Domain.Entities;
 using Web.Features.Auth;
 using Web.Features.Reports;
 using Web.Features.Reports.CreateReport;
+using Web.Features.Reports.CreateUploadUrl;
 using Web.Features.Reports.ListReport;
 using Web.Infrastructure;
 using Web.Infrastructure.Persistence;
@@ -111,6 +112,7 @@ public static class DependencyInjection
         builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
         builder.Services.AddScoped<CreateReportHandler>();
+        builder.Services.AddScoped<CreateUploadUrlHandler>();
         builder.Services.AddScoped<ListReportHandler>();
         
 

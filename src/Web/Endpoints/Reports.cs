@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Web.Contracts;
 using Web.Features.Reports;
 using Web.Features.Reports.CreateReport;
+using Web.Features.Reports.CreateUploadUrl;
 using Web.Features.Reports.ListReport;
 using Web.Infrastructure;
 
@@ -34,10 +35,10 @@ public class Reports : EndpointGroupBase
     private static async Task<IResult> CreateImageUploadUrl(
         CreateReportImageUploadUrlRequest request,
         ClaimsPrincipal user,
-        IReportImageUploadService imageUploadService,
+        CreateUploadUrlHandler handler,
         CancellationToken cancellationToken)
     {
-        var upload = await imageUploadService.CreateUploadUrlAsync(request, user, cancellationToken);
+        var upload = await handler.HandleAsync(request, user, cancellationToken);
 
         return Results.Ok(ApiResponse<ReportImageUploadUrlResponse>.Ok(upload, "Upload URL created."));
     }
