@@ -30,7 +30,7 @@ public sealed class ReportServiceTests
         dbContext.Categories.Add(category);
         dbContext.Reports.Add(report);
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
-        var service = new ReportService(dbContext, new StubReportImageUploadService());
+        var service = new ReportService(dbContext);
 
         var action = async () => await service.UpdateStatusAsync(
             report.Id,
@@ -75,24 +75,5 @@ public sealed class ReportServiceTests
             authenticationType: "Test");
 
         return new ClaimsPrincipal(identity);
-    }
-
-    private sealed class StubReportImageUploadService : IReportImageUploadService
-    {
-        public Task<ReportImageUploadUrlResponse> CreateUploadUrlAsync(
-            CreateReportImageUploadUrlRequest request,
-            ClaimsPrincipal user,
-            CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task MarkIssuedImageAsUsedAsync(
-            string imageUrl,
-            Guid userId,
-            CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
     }
 }

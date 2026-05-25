@@ -2,10 +2,7 @@ namespace Web.Infrastructure;
 
 public static class EndpointRouteBuilderExtensions
 {
-    public static IEndpointRouteBuilder MapGet(
-        this IEndpointRouteBuilder builder,
-        Delegate handler,
-        string pattern = "")
+    public static IEndpointRouteBuilder MapGet(this IEndpointRouteBuilder builder, Delegate handler, string pattern = "")
     {
         builder
             .MapGet(pattern, handler)

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Web.Contracts;
 using Web.Features.Reports;
+using Web.Features.Reports.CreateReport;
 using Web.Infrastructure;
 
 namespace Web.Endpoints;
@@ -55,9 +56,10 @@ public class Reports : EndpointGroupBase
         CreateReportRequest request,
         ClaimsPrincipal user,
         IReportService reportService,
+        CreateReportHandler handler,
         CancellationToken cancellationToken)
     {
-        var report = await reportService.CreateAsync(request, user, cancellationToken);
+        var report = await handler.HandleAsync(request, user, cancellationToken);
 
         return Results.Created(
             $"/api/Reports/{report.Id}",

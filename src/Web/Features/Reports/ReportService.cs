@@ -7,11 +7,6 @@ namespace Web.Features.Reports;
 
 public interface IReportService
 {
-    Task<ReportResponse> CreateAsync(
-        CreateReportRequest request,
-        ClaimsPrincipal user,
-        CancellationToken cancellationToken);
-
     Task<IReadOnlyList<ReportListItemResponse>> ListAsync(CancellationToken cancellationToken);
 
     Task<ReportResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken);
@@ -26,49 +21,8 @@ public interface IReportService
 }
 
 public sealed class ReportService(
-    ApplicationDbContext dbContext,
-    IReportImageUploadService imageUploadService) : IReportService
+    ApplicationDbContext dbContext) : IReportService
 {
-    public async Task<ReportResponse> CreateAsync(
-        CreateReportRequest request,
-        ClaimsPrincipal user,
-        CancellationToken cancellationToken)
-    {
-        ValidateCreateReportRequest(request);
-
-        var userId = ReportUserClaims.GetUserId(user);
-        var categoryExists = await dbContext.Categories
-            .AnyAsync(category => category.Id == request.CategoryId, cancellationToken);
-
-        if (!categoryExists)
-        {
-            throw new KeyNotFoundException("Category was not found.");
-        }
-
-        await imageUploadService.MarkIssuedImageAsUsedAsync(
-            request.PhotoUrl,
-            userId,
-            cancellationToken);
-
-        var report = new Report
-        {
-            Description = request.Description.Trim(),
-            CategoryId = request.CategoryId,
-            PhotoUrl = request.PhotoUrl.Trim(),
-            County = request.County.Trim(),
-            RoadName = request.RoadName.Trim(),
-            CreatedBy = userId
-        };
-
-        dbContext.Reports.Add(report);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        await dbContext.Entry(report)
-            .Reference(currentReport => currentReport.Category)
-            .LoadAsync(cancellationToken);
-
-        return ToReportResponse(report, confirmationCount: 0);
-    }
 
     public async Task<IReadOnlyList<ReportListItemResponse>> ListAsync(CancellationToken cancellationToken)
     {

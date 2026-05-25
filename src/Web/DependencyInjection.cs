@@ -7,6 +7,7 @@ using Microsoft.OpenApi;
 using Web.Domain.Entities;
 using Web.Features.Auth;
 using Web.Features.Reports;
+using Web.Features.Reports.CreateReport;
 using Web.Infrastructure;
 using Web.Infrastructure.Persistence;
 
@@ -17,7 +18,7 @@ public static class DependencyInjection
     public static IHostApplicationBuilder AddWebServices(this IHostApplicationBuilder builder)
     {
         var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is required.");
-
+        
         var jwtOptions = builder.Configuration
             .GetSection(JwtOptions.SectionName)
             .Get<JwtOptions>();
@@ -108,6 +109,8 @@ public static class DependencyInjection
         builder.Services.AddScoped<IReportService, ReportService>();
         builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        builder.Services.AddScoped<CreateReportHandler>();
+        
 
         return builder;
     }

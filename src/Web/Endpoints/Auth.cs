@@ -8,13 +8,17 @@ public sealed class Auth : EndpointGroupBase
 {
     public override void Map(WebApplication app)
     {
-        var group = app.MapGroup(this);
-
-        group.MapPost("/register", Register)
-            .WithName(nameof(Register));
-
-        group.MapPost("/login", Login)
-            .WithName(nameof(Login));
+        app.MapGroup(this)
+            .MapPost(Register, "/register")
+            .MapPost(Login, "/login");
+        
+        // var group = app.MapGroup(this);
+        //
+        // group.MapPost("/register", Register)
+        //     .WithName(nameof(Register));
+        //
+        // group.MapPost("/login", Login)
+        //     .WithName(nameof(Login));
     }
 
     private static async Task<IResult> Register(
