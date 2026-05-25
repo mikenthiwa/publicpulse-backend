@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Web.Contracts;
 using Web.Features.Reports;
 using Web.Features.Reports.CreateReport;
+using Web.Features.Reports.ListReport;
 using Web.Infrastructure;
 
 namespace Web.Endpoints;
@@ -67,10 +68,10 @@ public class Reports : EndpointGroupBase
     }
 
     private static async Task<IResult> ListReports(
-        IReportService reportService,
+        ListReportHandler handler,
         CancellationToken cancellationToken)
     {
-        var reports = await reportService.ListAsync(cancellationToken);
+        var reports = await handler.HandleAsync(cancellationToken);
 
         return Results.Ok(ApiResponse<IReadOnlyList<ReportListItemResponse>>.Ok(
             reports,

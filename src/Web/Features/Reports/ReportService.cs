@@ -7,8 +7,6 @@ namespace Web.Features.Reports;
 
 public interface IReportService
 {
-    Task<IReadOnlyList<ReportListItemResponse>> ListAsync(CancellationToken cancellationToken);
-
     Task<ReportResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
     Task<ConfirmReportResponse> ConfirmAsync(Guid id, CancellationToken cancellationToken);
@@ -23,24 +21,6 @@ public interface IReportService
 public sealed class ReportService(
     ApplicationDbContext dbContext) : IReportService
 {
-
-    public async Task<IReadOnlyList<ReportListItemResponse>> ListAsync(CancellationToken cancellationToken)
-    {
-        return await dbContext.Reports
-            .AsNoTracking()
-            .OrderByDescending(report => report.Created)
-            .Select(report => new ReportListItemResponse(
-                report.Id,
-                report.CategoryId,
-                report.Category.Name,
-                report.County,
-                report.RoadName,
-                report.Status,
-                report.Confirmations.Count,
-                report.Created))
-            .ToListAsync(cancellationToken);
-    }
-
     public async Task<ReportResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var report = await dbContext.Reports
@@ -124,33 +104,5 @@ public sealed class ReportService(
             confirmationCount,
             report.Created,
             report.LastModified);
-    }
-
-    private static void ValidateCreateReportRequest(CreateReportRequest request)
-    {
-        if (string.IsNullOrWhiteSpace(request.Description))
-        {
-            throw new ArgumentException("Description is required.");
-        }
-
-        if (request.CategoryId == Guid.Empty)
-        {
-            throw new ArgumentException("Category is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(request.PhotoUrl))
-        {
-            throw new ArgumentException("Photo URL is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(request.County))
-        {
-            throw new ArgumentException("County is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(request.RoadName))
-        {
-            throw new ArgumentException("Road name is required.");
-        }
     }
 }
