@@ -28,6 +28,27 @@ public class CreateReportHandler(
             throw new KeyNotFoundException("Category was not found.");
         }
 
+        var publicIds = request.Images
+            .Select(image => image.PublicId.Trim())
+            .ToArray();
+
+        var hasDuplicatePublicIds = publicIds
+            .Distinct(StringComparer.Ordinal)
+            .Count() != publicIds.Length;
+
+        if (hasDuplicatePublicIds)
+        {
+            throw new ArgumentException("Report images must be unique.");
+        }
+
+        var hasUsedPublicIds = await dbContext.ReportImages
+            .AnyAsync(image => publicIds.Contains(image.PublicId), cancellationToken);
+
+        if (hasUsedPublicIds)
+        {
+            throw new ArgumentException("One or more images have already been used.");
+        }
+
         var report = new Report
         {
             Description = request.Description.Trim(),

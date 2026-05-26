@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Web.Contracts;
+using Web.Common.Models;
 using Web.Features.Categories;
 using Web.Infrastructure;
 using Web.Infrastructure.Persistence;

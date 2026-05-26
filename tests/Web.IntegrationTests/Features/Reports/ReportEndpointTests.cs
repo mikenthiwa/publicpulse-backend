@@ -88,7 +88,67 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         report.Images.Should().HaveCount(2);
         report.Images.Should().OnlyContain(image => image.PublicId.StartsWith(_currentUserFolder!, StringComparison.Ordinal));
         report.Images.Should().OnlyContain(image =>
-            image.ImageUrl == $"https://res.cloudinary.com/public-pulse/image/upload/v123/{image.PublicId}");
+            image.ImageUrl == $"https://res.cloudinary.com/public-pulse/image/upload/v123/{EscapePublicId(image.PublicId)}");
+    }
+
+    [Fact]
+    public async Task CreateReport_WithSpecialCharactersInPublicId_ShouldReturnEscapedImageUrl()
+    {
+        await AuthenticateAsync("escaped-url@example.com");
+        var publicId = $"{_currentUserFolder}/road image #1";
+
+        var response = await _client.PostAsJsonAsync(
+            "/api/Reports",
+            CreateReportRequest(images: [new CreateReportImageRequest(publicId, "123", "valid-signature")]),
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var report = await ApiTestClient.ReadDataAsync<ReportResponse>(
+            response,
+            TestContext.Current.CancellationToken);
+
+        report.Images.Should().ContainSingle()
+            .Which.ImageUrl.Should().Be(
+                $"https://res.cloudinary.com/public-pulse/image/upload/v123/{EscapePublicId(publicId)}");
+    }
+
+    [Fact]
+    public async Task CreateReport_WithDuplicatePublicIds_ShouldReturnBadRequest()
+    {
+        await AuthenticateAsync("duplicate-image@example.com");
+        var publicId = $"{_currentUserFolder}/road-duplicate";
+        var images = new[]
+        {
+            new CreateReportImageRequest(publicId, "123", "valid-signature"),
+            new CreateReportImageRequest(publicId, "123", "valid-signature")
+        };
+
+        var response = await _client.PostAsJsonAsync(
+            "/api/Reports",
+            CreateReportRequest(images: images),
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task CreateReport_WithPreviouslyUsedPublicId_ShouldReturnBadRequest()
+    {
+        await AuthenticateAsync("reused-image@example.com");
+        var publicId = $"{_currentUserFolder}/road-reused";
+        var firstResponse = await _client.PostAsJsonAsync(
+            "/api/Reports",
+            CreateReportRequest(images: [new CreateReportImageRequest(publicId, "123", "valid-signature")]),
+            TestContext.Current.CancellationToken);
+
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var secondResponse = await _client.PostAsJsonAsync(
+            "/api/Reports",
+            CreateReportRequest(images: [new CreateReportImageRequest(publicId, "123", "valid-signature")]),
+            TestContext.Current.CancellationToken);
+
+        secondResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -360,5 +420,15 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             publicId,
             "123",
             signature);
+    }
+
+    private static string EscapePublicId(string publicId)
+    {
+        return string.Join(
+            "/",
+            publicId
+                .Trim()
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .Select(Uri.EscapeDataString));
     }
 }

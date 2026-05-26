@@ -62,6 +62,13 @@ public sealed class CloudinaryReportImageService(
 
     public string CreateImageUrl(string publicId, string version)
     {
-        return $"https://res.cloudinary.com/{_options.CloudName}/image/upload/v{version.Trim()}/{publicId.Trim()}";
+        var escapedPublicId = string.Join(
+            "/",
+            publicId
+                .Trim()
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .Select(Uri.EscapeDataString));
+
+        return $"https://res.cloudinary.com/{_options.CloudName}/image/upload/v{version.Trim()}/{escapedPublicId}";
     }
 }

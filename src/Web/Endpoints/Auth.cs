@@ -1,4 +1,4 @@
-using Web.Contracts;
+using Web.Common.Models;
 using Web.Features.Auth;
 using Web.Infrastructure;
 

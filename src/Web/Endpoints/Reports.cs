@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using Web.Contracts;
+using Web.Common.Models;
 using Web.Features.Reports;
 using Web.Features.Reports.CreateImageUploadSignature;
 using Web.Features.Reports.CreateReport;

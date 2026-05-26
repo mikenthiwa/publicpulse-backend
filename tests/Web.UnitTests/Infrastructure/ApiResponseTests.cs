@@ -1,5 +1,5 @@
 using FluentAssertions;
-using Web.Contracts;
+using Web.Common.Models;
 
 namespace Web.UnitTests.Infrastructure;
 
