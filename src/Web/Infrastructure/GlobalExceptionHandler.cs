@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Web.Features.Reports;
 
 namespace Web.Infrastructure;
 
@@ -12,6 +13,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         { typeof(ArgumentException), HandleBadRequestException },
         { typeof(InvalidOperationException), HandleBadRequestException },
         { typeof(UnauthorizedAccessException), HandleForbiddenException },
+        { typeof(ReportImageUploadException), HandleBadGatewayException },
     };
 
     public async ValueTask<bool> TryHandleAsync(
@@ -58,6 +60,15 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             httpContext,
             StatusCodes.Status403Forbidden,
             "Forbidden.",
+            exception.Message);
+    }
+
+    private static Task HandleBadGatewayException(HttpContext httpContext, Exception exception)
+    {
+        return WriteProblemDetails(
+            httpContext,
+            StatusCodes.Status502BadGateway,
+            "Image upload failed.",
             exception.Message);
     }
 

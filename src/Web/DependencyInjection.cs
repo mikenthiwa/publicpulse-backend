@@ -1,14 +1,16 @@
 using System.Text;
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Web.Domain.Entities;
 using Web.Features.Auth;
 using Web.Features.Reports;
+using Web.Features.Reports.CreateImageUploadSignature;
 using Web.Features.Reports.CreateReport;
-using Web.Features.Reports.CreateUploadUrl;
 using Web.Features.Reports.ListReport;
 using Web.Infrastructure;
 using Web.Infrastructure.Persistence;
@@ -85,7 +87,24 @@ public static class DependencyInjection
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
-        builder.Services.Configure<ReportImageStorageOptions>(builder.Configuration.GetSection(ReportImageStorageOptions.SectionName));
+        builder.Services.Configure<CloudinaryOptions>(builder.Configuration.GetSection(CloudinaryOptions.SectionName));
+        builder.Services.AddSingleton(serviceProvider =>
+        {
+            var cloudinaryOptions = serviceProvider.GetRequiredService<IOptions<CloudinaryOptions>>().Value;
+
+            if (string.IsNullOrWhiteSpace(cloudinaryOptions.CloudName)
+                || string.IsNullOrWhiteSpace(cloudinaryOptions.ApiKey)
+                || string.IsNullOrWhiteSpace(cloudinaryOptions.ApiSecret)
+                || string.IsNullOrWhiteSpace(cloudinaryOptions.UploadPreset))
+            {
+                throw new ReportImageUploadException("Cloudinary configuration is missing.");
+            }
+
+            return new Cloudinary(new Account(
+                cloudinaryOptions.CloudName,
+                cloudinaryOptions.ApiKey,
+                cloudinaryOptions.ApiSecret));
+        });
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -106,13 +125,12 @@ public static class DependencyInjection
             options.UseNpgsql(defaultConnection));
         builder.Services.AddScoped<IDatabaseHealthCheck, DatabaseHealthCheck>();
         builder.Services.AddScoped<IAuthService, AuthService>();
-        builder.Services.AddScoped<IReportImageUploadService, ReportImageUploadService>();
-        builder.Services.AddScoped<IReportImageStorageService, ReportImageStorageService>();
+        builder.Services.AddScoped<IReportImageCloudinaryService, CloudinaryReportImageService>();
         builder.Services.AddScoped<IReportService, ReportService>();
         builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        builder.Services.AddScoped<CreateImageUploadSignatureHandler>();
         builder.Services.AddScoped<CreateReportHandler>();
-        builder.Services.AddScoped<CreateUploadUrlHandler>();
         builder.Services.AddScoped<ListReportHandler>();
         
 

@@ -161,6 +161,28 @@ Copy `.env.example` into your local environment manager or export the values in 
 | `Jwt__Audience` | JWT token audience |
 | `Jwt__SigningKey` | JWT signing key |
 | `Jwt__ExpiryMinutes` | JWT token lifetime in minutes |
+| `Cloudinary__CloudName` | Cloudinary cloud name, stored with user secrets locally |
+| `Cloudinary__ApiKey` | Cloudinary API key, stored with user secrets locally |
+| `Cloudinary__ApiSecret` | Cloudinary API secret, stored with user secrets locally |
+| `Cloudinary__Folder` | Cloudinary folder prefix for report images |
+| `Cloudinary__UploadPreset` | Cloudinary upload preset that enforces allowed image formats and file size |
+| `Cloudinary__MaxImagesPerReport` | Maximum number of images per report |
+
+Store Cloudinary account credentials with .NET user secrets for local development:
+
+```bash
+dotnet user-secrets set "Cloudinary:CloudName" "<cloud-name>" --project src/Web/Web.csproj
+dotnet user-secrets set "Cloudinary:ApiKey" "<api-key>" --project src/Web/Web.csproj
+dotnet user-secrets set "Cloudinary:ApiSecret" "<api-secret>" --project src/Web/Web.csproj
+```
+
+Report images use browser-direct Cloudinary uploads:
+
+1. Call authenticated `POST /api/Reports/images/upload-signature`.
+2. Upload the image directly from the browser to `https://api.cloudinary.com/v1_1/{cloudName}/image/upload` with `api_key`, `timestamp`, `folder`, `upload_preset`, `signature`, and `file`.
+3. Send JSON to `POST /api/Reports` with `Description`, `CategoryId`, `County`, `RoadName`, and one to five `Images` entries containing `publicId`, `version`, and `signature` from Cloudinary. The API derives and stores the final Cloudinary image URL.
+
+Configure the Cloudinary upload preset to allow only report image formats and enforce the desired per-file size limit.
 
 ## Project Structure
 

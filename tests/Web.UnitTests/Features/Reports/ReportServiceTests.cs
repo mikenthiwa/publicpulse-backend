@@ -21,7 +21,6 @@ public sealed class ReportServiceTests
         {
             Description = "Large pothole",
             CategoryId = category.Id,
-            PhotoUrl = "https://example.com/photo.jpg",
             County = "Nairobi",
             RoadName = "Kenyatta Avenue",
             CreatedBy = creator.Id

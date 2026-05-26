@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="FluentAssertions" Version="8.9.0" />
+    <PackageVersion Include="CloudinaryDotNet" Version="1.29.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.7" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />

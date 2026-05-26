@@ -14,10 +14,6 @@ public sealed class ReportConfiguration : IEntityTypeConfiguration<Report>
             .HasMaxLength(2000)
             .IsRequired();
 
-        builder.Property(r => r.PhotoUrl)
-            .HasMaxLength(2048)
-            .IsRequired();
-
         builder.Property(r => r.County)
             .HasMaxLength(100)
             .IsRequired();

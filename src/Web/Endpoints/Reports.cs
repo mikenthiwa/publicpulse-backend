@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using Web.Contracts;
 using Web.Features.Reports;
+using Web.Features.Reports.CreateImageUploadSignature;
 using Web.Features.Reports.CreateReport;
-using Web.Features.Reports.CreateUploadUrl;
 using Web.Features.Reports.ListReport;
 using Web.Infrastructure;
 
@@ -17,11 +17,9 @@ public class Reports : EndpointGroupBase
         group.MapGet("", ListReports);
         group.MapGet("/{id:guid}", GetReportById)
             .WithName(nameof(GetReportById));
-        group.MapPost("/images/upload-url", CreateImageUploadUrl)
-            .WithName(nameof(CreateImageUploadUrl))
+        group.MapPost("/images/upload-signature", CreateImageUploadSignature)
+            .WithName(nameof(CreateImageUploadSignature))
             .RequireAuthorization();
-        group.MapPut("/images/uploads/{token}", UploadLocalImage)
-            .WithName(nameof(UploadLocalImage));
         group.MapPost("", CreateReport)
             .WithName(nameof(CreateReport))
             .RequireAuthorization();
@@ -32,32 +30,9 @@ public class Reports : EndpointGroupBase
             .RequireAuthorization();
     }
 
-    private static async Task<IResult> CreateImageUploadUrl(
-        CreateReportImageUploadUrlRequest request,
-        ClaimsPrincipal user,
-        CreateUploadUrlHandler handler,
-        CancellationToken cancellationToken)
-    {
-        var upload = await handler.HandleAsync(request, user, cancellationToken);
-
-        return Results.Ok(ApiResponse<ReportImageUploadUrlResponse>.Ok(upload, "Upload URL created."));
-    }
-
-    private static async Task<IResult> UploadLocalImage(
-        string token,
-        HttpRequest request,
-        IReportImageStorageService storageService,
-        CancellationToken cancellationToken)
-    {
-        await storageService.UploadLocalAsync(token, request, cancellationToken);
-
-        return Results.NoContent();
-    }
-
     private static async Task<IResult> CreateReport(
         CreateReportRequest request,
         ClaimsPrincipal user,
-        IReportService reportService,
         CreateReportHandler handler,
         CancellationToken cancellationToken)
     {
@@ -66,6 +41,17 @@ public class Reports : EndpointGroupBase
         return Results.Created(
             $"/api/Reports/{report.Id}",
             ApiResponse<ReportResponse>.Ok(report, "Report created successfully."));
+    }
+
+    private static IResult CreateImageUploadSignature(
+        ClaimsPrincipal user,
+        CreateImageUploadSignatureHandler handler)
+    {
+        var signature = handler.Handle(user);
+
+        return Results.Ok(ApiResponse<ReportImageUploadSignatureResponse>.Ok(
+            signature,
+            "Upload signature created."));
     }
 
     private static async Task<IResult> ListReports(

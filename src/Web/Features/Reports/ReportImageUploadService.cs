@@ -1,45 +1,67 @@
-using Microsoft.EntityFrameworkCore;
-using Web.Infrastructure.Persistence;
+using CloudinaryDotNet;
+using Microsoft.Extensions.Options;
 
 namespace Web.Features.Reports;
 
-public interface IReportImageUploadService
+public interface IReportImageCloudinaryService
 {
-    Task MarkIssuedImageAsUsedAsync(
-        string imageUrl,
-        Guid userId,
-        CancellationToken cancellationToken);
+    ReportImageUploadSignatureResponse CreateUploadSignature(Guid userId);
+
+    bool IsUploadResultValid(CreateReportImageRequest image);
+
+    string GetUserFolder(Guid userId);
+
+    string CreateImageUrl(string publicId, string version);
 }
 
-public sealed class ReportImageUploadService(
-    ApplicationDbContext dbContext) : IReportImageUploadService
+public sealed class ReportImageUploadException(string message) : Exception(message);
+
+public sealed class CloudinaryReportImageService(
+    Cloudinary cloudinary,
+    IOptions<CloudinaryOptions> options) : IReportImageCloudinaryService
 {
-    public async Task MarkIssuedImageAsUsedAsync(
-        string imageUrl,
-        Guid userId,
-        CancellationToken cancellationToken)
+    private readonly CloudinaryOptions _options = options.Value;
+
+    public ReportImageUploadSignatureResponse CreateUploadSignature(Guid userId)
     {
-        var trimmedImageUrl = imageUrl.Trim();
-        var issuedUpload = await dbContext.ReportImageUploads
-            .SingleOrDefaultAsync(
-                upload => upload.ImageUrl == trimmedImageUrl && upload.CreatedBy == userId,
-                cancellationToken);
-
-        if (issuedUpload is null)
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var folder = GetUserFolder(userId);
+        var parameters = new Dictionary<string, object>
         {
-            throw new ArgumentException("Photo URL must reference an image upload issued by this API.");
-        }
+            ["folder"] = folder,
+            ["timestamp"] = timestamp,
+            ["upload_preset"] = _options.UploadPreset!
+        };
+        var signature = cloudinary.Api.SignParameters(parameters);
 
-        if (issuedUpload.ExpiresAtUtc <= DateTimeOffset.UtcNow)
-        {
-            throw new ArgumentException("Issued image upload has expired.");
-        }
+        return new ReportImageUploadSignatureResponse(
+            _options.CloudName!,
+            _options.ApiKey!,
+            timestamp,
+            folder,
+            _options.UploadPreset!,
+            signature);
+    }
 
-        if (issuedUpload.UsedAtUtc is not null)
-        {
-            throw new ArgumentException("Issued image upload has already been used.");
-        }
+    public bool IsUploadResultValid(CreateReportImageRequest image)
+    {
+        return cloudinary.Api.VerifyApiResponseSignature(
+            image.PublicId,
+            image.Version,
+            image.Signature);
+    }
 
-        issuedUpload.UsedAtUtc = DateTimeOffset.UtcNow;
+    public string GetUserFolder(Guid userId)
+    {
+        var rootFolder = string.IsNullOrWhiteSpace(_options.Folder)
+            ? "public-pulse/reports"
+            : _options.Folder.Trim().Trim('/');
+
+        return $"{rootFolder}/{userId:N}";
+    }
+
+    public string CreateImageUrl(string publicId, string version)
+    {
+        return $"https://res.cloudinary.com/{_options.CloudName}/image/upload/v{version.Trim()}/{publicId.Trim()}";
     }
 }

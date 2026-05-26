@@ -27,6 +27,7 @@ public sealed class ReportService(
             .AsNoTracking()
             .Include(report => report.Category)
             .Include(report => report.Confirmations)
+            .Include(report => report.Images)
             .SingleOrDefaultAsync(report => report.Id == id, cancellationToken);
 
         if (report is null)
@@ -70,6 +71,7 @@ public sealed class ReportService(
         var report = await dbContext.Reports
             .Include(report => report.Category)
             .Include(report => report.Confirmations)
+            .Include(report => report.Images)
             .SingleOrDefaultAsync(report => report.Id == id, cancellationToken);
 
         if (report is null)
@@ -97,7 +99,12 @@ public sealed class ReportService(
             report.Description,
             report.CategoryId,
             report.Category.Name,
-            report.PhotoUrl,
+            report.Images
+                .Select(image => new ReportImageResponse(
+                    image.Id,
+                    image.ImageUrl,
+                    image.PublicId))
+                .ToArray(),
             report.County,
             report.RoadName,
             report.Status,

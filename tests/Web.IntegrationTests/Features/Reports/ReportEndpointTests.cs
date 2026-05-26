@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Net.Http.Headers;
 using FluentAssertions;
 using Web.Features.Categories;
 using Web.Features.Reports;
@@ -11,6 +10,7 @@ namespace Web.IntegrationTests.Features.Reports;
 public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly HttpClient _client;
+    private string? _currentUserFolder;
 
     public ReportEndpointTests(TestWebApplicationFactory factory)
     {
@@ -18,25 +18,59 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
     }
 
     [Fact]
-    public async Task CreateReport_WithoutToken_ShouldReturnUnauthorized()
+    public async Task CreateImageUploadSignature_WithToken_ShouldReturnSignedCloudinaryParams()
     {
-        var response = await _client.PostAsJsonAsync(
-            "/api/Reports",
-            CreateReportRequest("https://example.com/photo.jpg"),
+        await AuthenticateAsync("signature@example.com");
+
+        var response = await _client.PostAsync(
+            "/api/Reports/images/upload-signature",
+            content: null,
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var signature = await ApiTestClient.ReadDataAsync<ReportImageUploadSignatureResponse>(
+            response,
+            TestContext.Current.CancellationToken);
+
+        signature.CloudName.Should().Be("public-pulse");
+        signature.ApiKey.Should().Be("test-api-key");
+        signature.Timestamp.Should().Be(1_800_000_000);
+        signature.Signature.Should().Be("test-upload-signature");
+        signature.Folder.Should().StartWith("public-pulse/reports/");
+        signature.UploadPreset.Should().Be("test-upload-preset");
+        _currentUserFolder = signature.Folder;
+    }
+
+    [Fact]
+    public async Task CreateImageUploadSignature_WithoutToken_ShouldReturnUnauthorized()
+    {
+        var response = await _client.PostAsync(
+            "/api/Reports/images/upload-signature",
+            content: null,
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
-    public async Task CreateReport_WithToken_ShouldReturnCreatedAndHideCreatorIdentity()
+    public async Task CreateReport_WithoutToken_ShouldReturnUnauthorized()
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/Reports",
+            CreateReportRequest(),
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task CreateReport_WithVerifiedCloudinaryImages_ShouldReturnCreatedAndHideCreatorIdentity()
     {
         await AuthenticateAsync("report-creator@example.com");
-        var upload = await CreateImageUploadAsync();
 
         var response = await _client.PostAsJsonAsync(
             "/api/Reports",
-            CreateReportRequest(upload.ImageUrl),
+            CreateReportRequest(imageCount: 2),
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -51,162 +85,79 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         report.Id.Should().NotBeEmpty();
         report.Status.Should().Be(ReportStatus.Reported);
         report.ConfirmationCount.Should().Be(0);
+        report.Images.Should().HaveCount(2);
+        report.Images.Should().OnlyContain(image => image.PublicId.StartsWith(_currentUserFolder!, StringComparison.Ordinal));
+        report.Images.Should().OnlyContain(image =>
+            image.ImageUrl == $"https://res.cloudinary.com/public-pulse/image/upload/v123/{image.PublicId}");
     }
 
     [Fact]
-    public async Task CreateImageUploadUrl_WithTokenAndValidMetadata_ShouldReturnUploadTarget()
+    public async Task CreateReport_WithInvalidCloudinarySignature_ShouldReturnBadRequest()
     {
-        await AuthenticateAsync("image-upload@example.com");
+        await AuthenticateAsync("invalid-signature@example.com");
 
         var response = await _client.PostAsJsonAsync(
-            "/api/Reports/images/upload-url",
-            new CreateReportImageUploadUrlRequest("road.jpg", "image/jpeg", 12_345),
-            TestContext.Current.CancellationToken);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var upload = await ApiTestClient.ReadDataAsync<ReportImageUploadUrlResponse>(
-            response,
-            TestContext.Current.CancellationToken);
-
-        upload.UploadUrl.Should().Contain("/api/Reports/images/uploads/");
-        upload.ImageUrl.Should().Contain("/uploads/reports/");
-        upload.ImageKey.Should().StartWith("reports/");
-        upload.ImageKey.Should().EndWith(".jpg");
-        upload.ImageKey.Should().NotContain("road.jpg");
-        upload.Headers.Should().Contain("Content-Type", "image/jpeg");
-    }
-
-    [Fact]
-    public async Task CreateImageUploadUrl_WithoutToken_ShouldReturnUnauthorized()
-    {
-        var response = await _client.PostAsJsonAsync(
-            "/api/Reports/images/upload-url",
-            new CreateReportImageUploadUrlRequest("road.jpg", "image/jpeg", 12_345),
-            TestContext.Current.CancellationToken);
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    public async Task CreateImageUploadUrl_WithUnsupportedContentType_ShouldReturnBadRequest()
-    {
-        await AuthenticateAsync("unsupported-image@example.com");
-
-        var response = await _client.PostAsJsonAsync(
-            "/api/Reports/images/upload-url",
-            new CreateReportImageUploadUrlRequest("road.svg", "image/svg+xml", 12_345),
+            "/api/Reports",
+            CreateReportRequest(signature: "invalid-signature"),
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task CreateImageUploadUrl_WithFileLargerThanFiveMb_ShouldReturnBadRequest()
+    public async Task CreateReport_WithImageOutsideUserFolder_ShouldReturnBadRequest()
     {
-        await AuthenticateAsync("large-image@example.com");
+        await AuthenticateAsync("wrong-folder@example.com");
 
         var response = await _client.PostAsJsonAsync(
-            "/api/Reports/images/upload-url",
-            new CreateReportImageUploadUrlRequest("road.jpg", "image/jpeg", (5 * 1024 * 1024) + 1),
+            "/api/Reports",
+            CreateReportRequest(publicIdPrefix: "public-pulse/reports/other-user"),
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task CreateImageUploadUrl_ShouldGenerateUniqueKeysAndIgnoreClientPath()
+    public async Task CreateReport_WithMoreThanFiveImages_ShouldReturnBadRequest()
     {
-        await AuthenticateAsync("unique-image@example.com");
-
-        var firstUpload = await CreateImageUploadAsync("../secret/road.jpg");
-        var secondUpload = await CreateImageUploadAsync("../secret/road.jpg");
-
-        firstUpload.ImageKey.Should().NotBe(secondUpload.ImageKey);
-        firstUpload.ImageKey.Should().NotContain("..");
-        firstUpload.ImageKey.Should().NotContain("secret");
-        secondUpload.ImageKey.Should().NotContain("..");
-        secondUpload.ImageKey.Should().NotContain("secret");
-    }
-
-    [Fact]
-    public async Task SignedLocalUploadUrl_WithMatchingPutMetadata_ShouldStoreDisplayableImage()
-    {
-        await AuthenticateAsync("put-image@example.com");
-        var upload = await CreateImageUploadAsync(contentLength: 4);
-        using var content = new ByteArrayContent([1, 2, 3, 4]);
-        content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
-
-        var uploadResponse = await _client.PutAsync(
-            new Uri(upload.UploadUrl).PathAndQuery,
-            content,
-            TestContext.Current.CancellationToken);
-
-        uploadResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
-
-        var imageResponse = await _client.GetAsync(
-            new Uri(upload.ImageUrl).PathAndQuery,
-            TestContext.Current.CancellationToken);
-
-        imageResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var storedBytes = await imageResponse.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken);
-        storedBytes.Should().Equal([1, 2, 3, 4]);
-    }
-
-    [Fact]
-    public async Task SignedLocalUploadUrl_PreflightFromFrontendOrigin_ShouldAllowPutUpload()
-    {
-        await AuthenticateAsync("cors-upload@example.com");
-        var upload = await CreateImageUploadAsync();
-        using var request = new HttpRequestMessage(
-            HttpMethod.Options,
-            new Uri(upload.UploadUrl).PathAndQuery);
-        request.Headers.Add("Origin", "http://localhost:3000");
-        request.Headers.Add("Access-Control-Request-Method", "PUT");
-        request.Headers.Add("Access-Control-Request-Headers", "content-type");
-
-        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
-
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        response.Headers.GetValues("Access-Control-Allow-Origin")
-            .Should()
-            .ContainSingle("http://localhost:3000");
-        response.Headers.GetValues("Access-Control-Allow-Methods")
-            .Should()
-            .Contain(methods => methods.Contains("PUT", StringComparison.OrdinalIgnoreCase));
-        response.Headers.GetValues("Access-Control-Allow-Headers")
-            .Should()
-            .Contain(headers => headers.Contains("content-type", StringComparison.OrdinalIgnoreCase));
-    }
-
-    [Fact]
-    public async Task CreateReport_WithIssuedImageUrl_ShouldReturnCreatedAndPhotoUrl()
-    {
-        await AuthenticateAsync("issued-image@example.com");
-        var upload = await CreateImageUploadAsync();
+        await AuthenticateAsync("too-many-images@example.com");
 
         var response = await _client.PostAsJsonAsync(
             "/api/Reports",
-            CreateReportRequest(upload.ImageUrl),
+            CreateReportRequest(imageCount: 6),
             TestContext.Current.CancellationToken);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
-
-        var report = await ApiTestClient.ReadDataAsync<ReportResponse>(
-            response,
-            TestContext.Current.CancellationToken);
-
-        report.PhotoUrl.Should().Be(upload.ImageUrl);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task CreateReport_WithUnissuedImageUrl_ShouldReturnBadRequest()
+    public async Task CreateReport_WithNoImages_ShouldReturnBadRequest()
     {
-        await AuthenticateAsync("unissued-image@example.com");
+        await AuthenticateAsync("no-images@example.com");
 
         var response = await _client.PostAsJsonAsync(
             "/api/Reports",
-            CreateReportRequest("https://example.com/photo.jpg"),
+            CreateReportRequest(images: []),
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task CreateReport_WithMissingImages_ShouldReturnBadRequest()
+    {
+        await AuthenticateAsync("missing-images@example.com");
+        var request = new
+        {
+            Description = "A large pothole is damaging vehicles.",
+            CategoryId = Category.RoadsId,
+            County = "Nairobi",
+            RoadName = "Kenyatta Avenue"
+        };
+
+        var response = await _client.PostAsJsonAsync(
+            "/api/Reports",
+            request,
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -234,7 +185,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
     }
 
     [Fact]
-    public async Task GetReportById_ShouldBePublicAndHideCreatorIdentity()
+    public async Task GetReportById_ShouldBePublicAndReturnImages()
     {
         await AuthenticateAsync("detail-creator@example.com");
         var createdReport = await CreateReportAsync();
@@ -254,6 +205,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             TestContext.Current.CancellationToken);
 
         report.Id.Should().Be(createdReport.Id);
+        report.Images.Should().ContainSingle();
     }
 
     [Fact]
@@ -315,6 +267,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             TestContext.Current.CancellationToken);
 
         report.Status.Should().Be(ReportStatus.InProgress);
+        report.Images.Should().ContainSingle();
     }
 
     [Fact]
@@ -354,14 +307,21 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             TestContext.Current.CancellationToken);
 
         _client.SetBearerToken(auth.Token);
+        var signatureResponse = await _client.PostAsync(
+            "/api/Reports/images/upload-signature",
+            content: null,
+            TestContext.Current.CancellationToken);
+        var signature = await ApiTestClient.ReadDataAsync<ReportImageUploadSignatureResponse>(
+            signatureResponse,
+            TestContext.Current.CancellationToken);
+        _currentUserFolder = signature.Folder;
     }
 
     private async Task<ReportResponse> CreateReportAsync()
     {
-        var upload = await CreateImageUploadAsync();
         var response = await _client.PostAsJsonAsync(
             "/api/Reports",
-            CreateReportRequest(upload.ImageUrl),
+            CreateReportRequest(),
             TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
@@ -371,29 +331,34 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             TestContext.Current.CancellationToken);
     }
 
-    private async Task<ReportImageUploadUrlResponse> CreateImageUploadAsync(
-        string fileName = "road.jpg",
-        long contentLength = 12_345)
-    {
-        var response = await _client.PostAsJsonAsync(
-            "/api/Reports/images/upload-url",
-            new CreateReportImageUploadUrlRequest(fileName, "image/jpeg", contentLength),
-            TestContext.Current.CancellationToken);
-
-        response.EnsureSuccessStatusCode();
-
-        return await ApiTestClient.ReadDataAsync<ReportImageUploadUrlResponse>(
-            response,
-            TestContext.Current.CancellationToken);
-    }
-
-    private static CreateReportRequest CreateReportRequest(string photoUrl)
+    private CreateReportRequest CreateReportRequest(
+        int imageCount = 1,
+        IReadOnlyList<CreateReportImageRequest>? images = null,
+        string roadName = "Kenyatta Avenue",
+        string signature = "valid-signature",
+        string? publicIdPrefix = null)
     {
         return new CreateReportRequest(
             "A large pothole is damaging vehicles.",
             Category.RoadsId,
-            photoUrl,
+            images ?? Enumerable.Range(1, imageCount)
+                .Select(index => CreateImage(index, signature, publicIdPrefix))
+                .ToArray(),
             "Nairobi",
-            "Kenyatta Avenue");
+            roadName);
+    }
+
+    private CreateReportImageRequest CreateImage(
+        int index,
+        string signature,
+        string? publicIdPrefix)
+    {
+        var prefix = publicIdPrefix ?? _currentUserFolder ?? "public-pulse/reports/missing-user";
+        var publicId = $"{prefix}/road-{index}";
+
+        return new CreateReportImageRequest(
+            publicId,
+            "123",
+            signature);
     }
 }

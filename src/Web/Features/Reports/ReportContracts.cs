@@ -5,20 +5,22 @@ namespace Web.Features.Reports;
 public sealed record CreateReportRequest(
     string Description,
     Guid CategoryId,
-    string PhotoUrl,
+    IReadOnlyList<CreateReportImageRequest> Images,
     string County,
     string RoadName);
 
-public sealed record CreateReportImageUploadUrlRequest(
-    string FileName,
-    string ContentType,
-    long ContentLength);
+public sealed record CreateReportImageRequest(
+    string PublicId,
+    string Version,
+    string Signature);
 
-public sealed record ReportImageUploadUrlResponse(
-    string UploadUrl,
-    string ImageUrl,
-    string ImageKey,
-    IReadOnlyDictionary<string, string> Headers);
+public sealed record ReportImageUploadSignatureResponse(
+    string CloudName,
+    string ApiKey,
+    long Timestamp,
+    string Folder,
+    string UploadPreset,
+    string Signature);
 
 public sealed record UpdateReportStatusRequest(ReportStatus Status);
 
@@ -37,12 +39,17 @@ public sealed record ReportResponse(
     string Description,
     Guid CategoryId,
     string CategoryName,
-    string PhotoUrl,
+    IReadOnlyList<ReportImageResponse> Images,
     string County,
     string RoadName,
     ReportStatus Status,
     int ConfirmationCount,
     DateTimeOffset Created,
     DateTimeOffset? LastModified);
+
+public sealed record ReportImageResponse(
+    Guid Id,
+    string ImageUrl,
+    string PublicId);
 
 public sealed record ConfirmReportResponse(Guid ReportId, int ConfirmationCount);

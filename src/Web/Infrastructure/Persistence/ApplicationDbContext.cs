@@ -12,7 +12,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 
     public DbSet<Report> Reports => Set<Report>();
 
-    public DbSet<ReportImageUpload> ReportImageUploads => Set<ReportImageUpload>();
+    public DbSet<ReportImage> ReportImages => Set<ReportImage>();
 
     public DbSet<ReportConfirmation> ReportConfirmations => Set<ReportConfirmation>();
 
@@ -21,7 +21,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new CategoryConfiguration());
         modelBuilder.ApplyConfiguration(new ReportConfiguration());
-        modelBuilder.ApplyConfiguration(new ReportImageUploadConfiguration());
+        modelBuilder.ApplyConfiguration(new ReportImageConfiguration());
         modelBuilder.ApplyConfiguration(new ReportConfirmationConfiguration());
     }
 }

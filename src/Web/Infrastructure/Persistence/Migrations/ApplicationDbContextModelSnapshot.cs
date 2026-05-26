@@ -99,11 +99,6 @@ namespace Web.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("LastModified")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("PhotoUrl")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)");
-
                     b.Property<string>("RoadName")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -146,33 +141,17 @@ namespace Web.Infrastructure.Persistence.Migrations
                     b.ToTable("ReportConfirmations");
                 });
 
-            modelBuilder.Entity("Web.Domain.Entities.ReportImageUpload", b =>
+            modelBuilder.Entity("Web.Domain.Entities.ReportImage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<long>("ContentLength")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("CreatedBy")
+                    b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("ExpiresAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ImageKey")
-                        .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
@@ -182,25 +161,22 @@ namespace Web.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("LastModified")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("OriginalFileName")
+                    b.Property<string>("PublicId")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
 
-                    b.Property<DateTimeOffset?>("UsedAtUtc")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedBy");
-
-                    b.HasIndex("ImageKey")
+                    b.HasIndex("PublicId")
                         .IsUnique();
 
-                    b.HasIndex("ImageUrl")
-                        .IsUnique();
+                    b.HasIndex("ReportId");
 
-                    b.ToTable("ReportImageUploads");
+                    b.ToTable("ReportImages", (string)null);
                 });
 
             modelBuilder.Entity("Web.Domain.Entities.User", b =>
@@ -265,15 +241,15 @@ namespace Web.Infrastructure.Persistence.Migrations
                     b.Navigation("Report");
                 });
 
-            modelBuilder.Entity("Web.Domain.Entities.ReportImageUpload", b =>
+            modelBuilder.Entity("Web.Domain.Entities.ReportImage", b =>
                 {
-                    b.HasOne("Web.Domain.Entities.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("Web.Domain.Entities.Report", "Report")
+                        .WithMany("Images")
+                        .HasForeignKey("ReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("CreatedByUser");
+                    b.Navigation("Report");
                 });
 
             modelBuilder.Entity("Web.Domain.Entities.Category", b =>
@@ -284,6 +260,8 @@ namespace Web.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Web.Domain.Entities.Report", b =>
                 {
                     b.Navigation("Confirmations");
+
+                    b.Navigation("Images");
                 });
 #pragma warning restore 612, 618
         }
