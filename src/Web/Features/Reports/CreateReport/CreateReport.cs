@@ -1,20 +1,20 @@
-using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Web.Domain.Entities;
+using Web.Infrastructure.Identity;
 using Web.Infrastructure.Persistence;
 
 namespace Web.Features.Reports.CreateReport;
 
 public class CreateReportHandler(
     ApplicationDbContext dbContext,
-    IReportImageCloudinaryService imageCloudinaryService)
+    IReportImageCloudinaryService imageCloudinaryService,
+    ICurrentUser currentUser)
 {
     public async Task<ReportResponse> HandleAsync(
         CreateReportRequest request,
-        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
-        var userId = ReportUserClaims.GetUserId(user);
+        var userId = currentUser.UserId;
         var categoryExists = await dbContext.Categories
             .AnyAsync(category => category.Id == request.CategoryId, cancellationToken);
 

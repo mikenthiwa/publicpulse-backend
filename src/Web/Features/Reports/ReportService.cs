@@ -1,6 +1,6 @@
-using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Web.Domain.Entities;
+using Web.Infrastructure.Identity;
 using Web.Infrastructure.Persistence;
 
 namespace Web.Features.Reports;
@@ -14,12 +14,12 @@ public interface IReportService
     Task<ReportResponse> UpdateStatusAsync(
         Guid id,
         UpdateReportStatusRequest request,
-        ClaimsPrincipal user,
         CancellationToken cancellationToken);
 }
 
 public sealed class ReportService(
-    ApplicationDbContext dbContext) : IReportService
+    ApplicationDbContext dbContext,
+    ICurrentUser currentUser) : IReportService
 {
     public async Task<ReportResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -64,10 +64,9 @@ public sealed class ReportService(
     public async Task<ReportResponse> UpdateStatusAsync(
         Guid id,
         UpdateReportStatusRequest request,
-        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
-        var userId = ReportUserClaims.GetUserId(user);
+        var userId = currentUser.UserId;
         var report = await dbContext.Reports
             .Include(report => report.Category)
             .Include(report => report.Confirmations)

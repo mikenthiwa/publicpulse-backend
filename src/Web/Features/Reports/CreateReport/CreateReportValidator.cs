@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.Extensions.Options;
+using Web.Infrastructure.Identity;
 
 namespace Web.Features.Reports.CreateReport;
 
@@ -8,7 +9,7 @@ public class CreateReportValidator : AbstractValidator<CreateReportRequest>
     public CreateReportValidator(
         IOptions<CloudinaryOptions> options,
         IReportImageCloudinaryService imageCloudinaryService,
-        IHttpContextAccessor httpContextAccessor)
+        ICurrentUser currentUser)
     {
         var cloudinaryOptions = options.Value;
 
@@ -57,7 +58,7 @@ public class CreateReportValidator : AbstractValidator<CreateReportRequest>
                     .WithMessage("Cloudinary signature is required.");
 
                 image.RuleFor(request => request)
-                    .Must(request => IsUploadedForCurrentUser(request, imageCloudinaryService, httpContextAccessor))
+                    .Must(request => IsUploadedForCurrentUser(request, imageCloudinaryService, currentUser))
                     .WithMessage("Image was not uploaded for the current user.")
                     .When(request => !string.IsNullOrWhiteSpace(request.PublicId));
 
@@ -75,15 +76,10 @@ public class CreateReportValidator : AbstractValidator<CreateReportRequest>
     private static bool IsUploadedForCurrentUser(
         CreateReportImageRequest image,
         IReportImageCloudinaryService imageCloudinaryService,
-        IHttpContextAccessor httpContextAccessor)
+        ICurrentUser currentUser)
     {
-        var user = httpContextAccessor.HttpContext?.User
-            ?? throw new UnauthorizedAccessException("Authenticated user is required.");
-
-        var userId = ReportUserClaims.GetUserId(user);
-
         return image.PublicId.Trim().StartsWith(
-            $"{imageCloudinaryService.GetUserFolder(userId)}/",
+            $"{imageCloudinaryService.GetUserFolder(currentUser.UserId)}/",
             StringComparison.Ordinal);
     }
 }

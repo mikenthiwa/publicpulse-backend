@@ -1,14 +1,13 @@
-using System.Security.Claims;
+using Web.Infrastructure.Identity;
 
 namespace Web.Features.Reports.CreateImageUploadSignature;
 
 public sealed class CreateImageUploadSignatureHandler(
-    IReportImageCloudinaryService imageCloudinaryService)
+    IReportImageCloudinaryService imageCloudinaryService,
+    ICurrentUser currentUser)
 {
-    public ReportImageUploadSignatureResponse Handle(ClaimsPrincipal user)
+    public ReportImageUploadSignatureResponse Handle()
     {
-        var userId = ReportUserClaims.GetUserId(user);
-
-        return imageCloudinaryService.CreateUploadSignature(userId);
+        return imageCloudinaryService.CreateUploadSignature(currentUser.UserId);
     }
 }

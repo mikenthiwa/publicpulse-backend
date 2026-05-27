@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using Web.Common.Models;
 using Web.Features.Reports;
@@ -34,11 +33,10 @@ public class Reports : EndpointGroupBase
 
     private static async Task<IResult> CreateReport(
         CreateReportRequest request,
-        ClaimsPrincipal user,
         CreateReportHandler handler,
         CancellationToken cancellationToken)
     {
-        var report = await handler.HandleAsync(request, user, cancellationToken);
+        var report = await handler.HandleAsync(request, cancellationToken);
 
         return Results.Created(
             $"/api/Reports/{report.Id}",
@@ -46,10 +44,9 @@ public class Reports : EndpointGroupBase
     }
 
     private static IResult CreateImageUploadSignature(
-        ClaimsPrincipal user,
         CreateImageUploadSignatureHandler handler)
     {
-        var signature = handler.Handle(user);
+        var signature = handler.Handle();
 
         return Results.Ok(ApiResponse<ReportImageUploadSignatureResponse>.Ok(
             signature,
@@ -92,11 +89,10 @@ public class Reports : EndpointGroupBase
     private static async Task<IResult> UpdateReportStatus(
         Guid id,
         UpdateReportStatusRequest request,
-        ClaimsPrincipal user,
         IReportService reportService,
         CancellationToken cancellationToken)
     {
-        var report = await reportService.UpdateStatusAsync(id, request, user, cancellationToken);
+        var report = await reportService.UpdateStatusAsync(id, request, cancellationToken);
 
         return Results.Ok(ApiResponse<ReportResponse>.Ok(
             report,

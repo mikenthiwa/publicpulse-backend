@@ -22,6 +22,7 @@ using Web.Features.Reports.CreateImageUploadSignature;
 using Web.Features.Reports.CreateReport;
 using Web.Features.Reports.ListReport;
 using Web.Infrastructure;
+using Web.Infrastructure.Identity;
 using Web.Infrastructure.Persistence;
 
 namespace Web;
@@ -96,6 +97,7 @@ public static class DependencyInjection
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<ICurrentUser, CurrentUser>();
         builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
         builder.Services.Configure<CloudinaryOptions>(builder.Configuration.GetSection(CloudinaryOptions.SectionName));
         builder.Services.AddSingleton(serviceProvider =>
