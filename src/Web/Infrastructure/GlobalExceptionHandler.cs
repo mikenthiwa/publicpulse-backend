@@ -1,7 +1,9 @@
 using System.Diagnostics;
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Web.Features.Reports;
+using ValidationException = Web.Common.Exceptions.ValidationException;
 
 namespace Web.Infrastructure;
 
@@ -14,6 +16,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         { typeof(InvalidOperationException), HandleBadRequestException },
         { typeof(UnauthorizedAccessException), HandleForbiddenException },
         { typeof(ReportImageUploadException), HandleBadGatewayException },
+        {typeof(ValidationException), HandleValidationException}
     };
 
     public async ValueTask<bool> TryHandleAsync(
@@ -34,6 +37,17 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         await handler.Invoke(httpContext, exception);
 
         return true;
+    }
+
+    private static Task HandleValidationException(HttpContext httpContext, Exception exception)
+    {
+        var ex = (ValidationException)exception;
+        httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+        return httpContext.Response.WriteAsJsonAsync(new ValidationProblemDetails(ex.Errors)
+        {
+            Status = StatusCodes.Status400BadRequest,
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+        });
     }
 
     private static Task HandleNotFoundException(HttpContext httpContext, Exception exception)
@@ -106,8 +120,6 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
 
         return httpContext.Response.WriteAsJsonAsync(
             problemDetails,
-            options: null,
-            contentType: "application/problem+json",
-            cancellationToken: default);
+            cancellationToken: CancellationToken.None);
     }
 }

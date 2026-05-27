@@ -1,11 +1,15 @@
+using System.Reflection;
 using System.Text;
 using CloudinaryDotNet;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
+using Web.Common.Factory;
 using Web.Domain.Entities;
 using Web.Features.Auth;
 using Web.Features.Auth.Login;
@@ -89,6 +93,7 @@ public static class DependencyInjection
         });
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddHttpContextAccessor();
         builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
         builder.Services.Configure<CloudinaryOptions>(builder.Configuration.GetSection(CloudinaryOptions.SectionName));
         builder.Services.AddSingleton(serviceProvider =>
@@ -137,8 +142,12 @@ public static class DependencyInjection
         builder.Services.AddScoped<CreateImageUploadSignatureHandler>();
         builder.Services.AddScoped<CreateReportHandler>();
         builder.Services.AddScoped<ListReportHandler>();
+        builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        builder.Services.AddFluentValidationAutoValidation(configuration =>
+        {
+            configuration.OverrideDefaultResultFactoryWith<CustomResultFactory>();
+        });
         
-
         return builder;
     }
 }

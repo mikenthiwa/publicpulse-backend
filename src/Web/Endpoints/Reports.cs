@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using Web.Common.Models;
 using Web.Features.Reports;
 using Web.Features.Reports.CreateImageUploadSignature;
@@ -22,6 +23,7 @@ public class Reports : EndpointGroupBase
             .RequireAuthorization();
         group.MapPost("", CreateReport)
             .WithName(nameof(CreateReport))
+            .AddFluentValidationAutoValidation()
             .RequireAuthorization();
         group.MapPost("/{id:guid}/confirmations", ConfirmReport)
             .WithName(nameof(ConfirmReport));
