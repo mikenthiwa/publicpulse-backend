@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using CloudinaryDotNet;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -126,6 +128,51 @@ public static class DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.FromMinutes(1)
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = context =>
+                    {
+                        context.HandleResponse();
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        var problemDetails = new ProblemDetails
+                        {
+                            Status = StatusCodes.Status401Unauthorized,
+                            Title = "Unauthorized.",
+                            Detail = "Authentication is required to access this resource.",
+                            Instance = context.Request.Path,
+                            Type = "https://tools.ietf.org/html/rfc7235#section-3.1"
+                        };
+
+                        problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
+
+                        return context.Response.WriteAsJsonAsync(
+                            problemDetails,
+                            (System.Text.Json.JsonSerializerOptions?)null,
+                            "application/problem+json",
+                            CancellationToken.None);
+                    },
+                    OnForbidden = context =>
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        var problemDetails = new ProblemDetails
+                        {
+                            Status = StatusCodes.Status403Forbidden,
+                            Title = "Forbidden.",
+                            Detail = "You are not allowed to access this resource.",
+                            Instance = context.Request.Path,
+                            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.3"
+                        };
+
+                        problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
+
+                        return context.Response.WriteAsJsonAsync(
+                            problemDetails,
+                            (System.Text.Json.JsonSerializerOptions?)null,
+                            "application/problem+json",
+                            CancellationToken.None);
+                    }
                 };
             });
         builder.Services.AddAuthorization();

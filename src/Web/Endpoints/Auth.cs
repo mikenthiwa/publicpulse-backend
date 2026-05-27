@@ -1,3 +1,4 @@
+using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using Web.Common.Models;
 using Web.Features.Auth;
 using Web.Features.Auth.Login;
@@ -11,6 +12,7 @@ public sealed class Auth : EndpointGroupBase
     public override void Map(WebApplication app)
     {
         app.MapGroup(this)
+            .AddFluentValidationAutoValidation()
             .MapPost(Register, "/register")
             .MapPost(Login, "/login");
     }

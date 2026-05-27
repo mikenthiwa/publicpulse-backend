@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Web.Features.Reports;
@@ -16,7 +15,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         { typeof(InvalidOperationException), HandleBadRequestException },
         { typeof(UnauthorizedAccessException), HandleForbiddenException },
         { typeof(ReportImageUploadException), HandleBadGatewayException },
-        {typeof(ValidationException), HandleValidationException}
+        { typeof(ValidationException), HandleValidationException }
     };
 
     public async ValueTask<bool> TryHandleAsync(
@@ -43,47 +42,106 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
     {
         var ex = (ValidationException)exception;
         httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-        return httpContext.Response.WriteAsJsonAsync(new ValidationProblemDetails(ex.Errors)
+        var problemDetails = new ValidationProblemDetails(ex.Errors)
         {
             Status = StatusCodes.Status400BadRequest,
+            Title = "One or more validation errors occurred.",
+            Detail = exception.Message,
+            Instance = httpContext.Request.Path,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-        });
+        };
+
+        problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? httpContext.TraceIdentifier;
+
+        return httpContext.Response.WriteAsJsonAsync(
+            problemDetails,
+            (System.Text.Json.JsonSerializerOptions?)null,
+            "application/problem+json",
+            CancellationToken.None);
     }
 
     private static Task HandleNotFoundException(HttpContext httpContext, Exception exception)
     {
-        return WriteProblemDetails(
-            httpContext,
-            StatusCodes.Status404NotFound,
-            "Resource not found.",
-            exception.Message);
+        httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+        var problemDetails = new ProblemDetails
+        {
+            Status = StatusCodes.Status404NotFound,
+            Title = "Resource not found.",
+            Detail = exception.Message,
+            Instance = httpContext.Request.Path,
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.4"
+        };
+
+        problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? httpContext.TraceIdentifier;
+
+        return httpContext.Response.WriteAsJsonAsync(
+            problemDetails,
+            (System.Text.Json.JsonSerializerOptions?)null,
+            "application/problem+json",
+            CancellationToken.None);
     }
 
     private static Task HandleBadRequestException(HttpContext httpContext, Exception exception)
     {
-        return WriteProblemDetails(
-            httpContext,
-            StatusCodes.Status400BadRequest,
-            "Bad request.",
-            exception.Message);
+        httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+        var problemDetails = new ProblemDetails
+        {
+            Status = StatusCodes.Status400BadRequest,
+            Title = "Bad request.",
+            Detail = exception.Message,
+            Instance = httpContext.Request.Path,
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+        };
+
+        problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? httpContext.TraceIdentifier;
+
+        return httpContext.Response.WriteAsJsonAsync(
+            problemDetails,
+            (System.Text.Json.JsonSerializerOptions?)null,
+            "application/problem+json",
+            CancellationToken.None);
     }
 
     private static Task HandleForbiddenException(HttpContext httpContext, Exception exception)
     {
-        return WriteProblemDetails(
-            httpContext,
-            StatusCodes.Status403Forbidden,
-            "Forbidden.",
-            exception.Message);
+        httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+        var problemDetails = new ProblemDetails
+        {
+            Status = StatusCodes.Status403Forbidden,
+            Title = "Forbidden.",
+            Detail = exception.Message,
+            Instance = httpContext.Request.Path,
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.3"
+        };
+
+        problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? httpContext.TraceIdentifier;
+
+        return httpContext.Response.WriteAsJsonAsync(
+            problemDetails,
+            (System.Text.Json.JsonSerializerOptions?)null,
+            "application/problem+json",
+            CancellationToken.None);
     }
 
     private static Task HandleBadGatewayException(HttpContext httpContext, Exception exception)
     {
-        return WriteProblemDetails(
-            httpContext,
-            StatusCodes.Status502BadGateway,
-            "Image upload failed.",
-            exception.Message);
+        httpContext.Response.StatusCode = StatusCodes.Status502BadGateway;
+        var problemDetails = new ProblemDetails
+        {
+            Status = StatusCodes.Status502BadGateway,
+            Title = "Image upload failed.",
+            Detail = exception.Message,
+            Instance = httpContext.Request.Path,
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.6.3"
+        };
+
+        problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? httpContext.TraceIdentifier;
+
+        return httpContext.Response.WriteAsJsonAsync(
+            problemDetails,
+            (System.Text.Json.JsonSerializerOptions?)null,
+            "application/problem+json",
+            CancellationToken.None);
     }
 
     private Task HandleUnhandledException(HttpContext httpContext, Exception exception)
@@ -94,32 +152,22 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             httpContext.Request.Method,
             httpContext.Request.Path);
 
-        return WriteProblemDetails(
-            httpContext,
-            StatusCodes.Status500InternalServerError,
-            "An unexpected error occurred.",
-            "The server encountered an unexpected error.");
-    }
-
-    private static Task WriteProblemDetails(
-        HttpContext httpContext,
-        int statusCode,
-        string title,
-        string detail)
-    {
-        httpContext.Response.StatusCode = statusCode;
+        httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
         var problemDetails = new ProblemDetails
         {
-            Status = statusCode,
-            Title = title,
-            Detail = detail,
-            Instance = httpContext.Request.Path
+            Status = StatusCodes.Status500InternalServerError,
+            Title = "An unexpected error occurred.",
+            Detail = "The server encountered an unexpected error.",
+            Instance = httpContext.Request.Path,
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1"
         };
 
         problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? httpContext.TraceIdentifier;
 
         return httpContext.Response.WriteAsJsonAsync(
             problemDetails,
-            cancellationToken: CancellationToken.None);
+            (System.Text.Json.JsonSerializerOptions?)null,
+            "application/problem+json",
+            CancellationToken.None);
     }
 }

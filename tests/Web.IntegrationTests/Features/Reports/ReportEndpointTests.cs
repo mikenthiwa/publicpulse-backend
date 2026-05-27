@@ -50,6 +50,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        await AssertUnauthorizedProblemDetailsAsync(response, "/api/Reports/images/upload-signature");
     }
 
     [Fact]
@@ -61,6 +62,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        await AssertUnauthorizedProblemDetailsAsync(response, "/api/Reports");
     }
 
     [Fact]
@@ -307,6 +309,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        await AssertUnauthorizedProblemDetailsAsync(response, $"/api/Reports/{createdReport.Id}/status");
     }
 
     [Fact]
@@ -376,6 +379,32 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             TestContext.Current.CancellationToken);
         _currentUserFolder = signature.Folder;
     }
+
+    private static async Task AssertUnauthorizedProblemDetailsAsync(
+        HttpResponseMessage response,
+        string instance)
+    {
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+
+        var problemDetails = await response.Content.ReadFromJsonAsync<TestProblemDetails>(
+            TestContext.Current.CancellationToken);
+
+        problemDetails.Should().NotBeNull();
+        problemDetails!.Type.Should().Be("https://tools.ietf.org/html/rfc7235#section-3.1");
+        problemDetails.Title.Should().Be("Unauthorized.");
+        problemDetails.Status.Should().Be((int)HttpStatusCode.Unauthorized);
+        problemDetails.Detail.Should().Be("Authentication is required to access this resource.");
+        problemDetails.Instance.Should().Be(instance);
+        problemDetails.TraceId.Should().NotBeNullOrWhiteSpace();
+    }
+
+    private sealed record TestProblemDetails(
+        string? Type,
+        string? Title,
+        int? Status,
+        string? Detail,
+        string? Instance,
+        string? TraceId);
 
     private async Task<ReportResponse> CreateReportAsync()
     {
