@@ -1,23 +1,17 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Web.Domain.Entities;
+using Web.Features.Auth;
 using Web.Infrastructure.Persistence;
 
-namespace Web.Features.Auth;
+namespace Web.Features.Auth.Register;
 
-public interface IAuthService
-{
-    Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken);
-
-    Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken);
-}
-
-public sealed class AuthService(
+public sealed class RegisterHandler(
     ApplicationDbContext dbContext,
     IPasswordHasher<User> passwordHasher,
-    IJwtTokenService jwtTokenService) : IAuthService
+    IJwtTokenService jwtTokenService)
 {
-    public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
+    public async Task<AuthResponse> HandleAsync(RegisterRequest request, CancellationToken cancellationToken)
     {
         ValidateEmailAndPassword(request.Email, request.Password);
 
@@ -40,32 +34,6 @@ public sealed class AuthService(
 
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(cancellationToken);
-
-        return jwtTokenService.CreateToken(user);
-    }
-
-    public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
-    {
-        ValidateEmailAndPassword(request.Email, request.Password);
-
-        var email = NormalizeEmail(request.Email);
-        var user = await dbContext.Users
-            .SingleOrDefaultAsync(user => user.Email == email, cancellationToken);
-
-        if (user is null)
-        {
-            throw new InvalidOperationException("Invalid email or password.");
-        }
-
-        var passwordVerification = passwordHasher.VerifyHashedPassword(
-            user,
-            user.PasswordHash,
-            request.Password);
-
-        if (passwordVerification == PasswordVerificationResult.Failed)
-        {
-            throw new InvalidOperationException("Invalid email or password.");
-        }
 
         return jwtTokenService.CreateToken(user);
     }

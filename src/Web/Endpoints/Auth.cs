@@ -1,5 +1,7 @@
 using Web.Common.Models;
 using Web.Features.Auth;
+using Web.Features.Auth.Login;
+using Web.Features.Auth.Register;
 using Web.Infrastructure;
 
 namespace Web.Endpoints;
@@ -11,32 +13,24 @@ public sealed class Auth : EndpointGroupBase
         app.MapGroup(this)
             .MapPost(Register, "/register")
             .MapPost(Login, "/login");
-        
-        // var group = app.MapGroup(this);
-        //
-        // group.MapPost("/register", Register)
-        //     .WithName(nameof(Register));
-        //
-        // group.MapPost("/login", Login)
-        //     .WithName(nameof(Login));
     }
 
     private static async Task<IResult> Register(
         RegisterRequest request,
-        IAuthService authService,
+        RegisterHandler handler,
         CancellationToken cancellationToken)
     {
-        var response = await authService.RegisterAsync(request, cancellationToken);
+        var response = await handler.HandleAsync(request, cancellationToken);
 
         return Results.Ok(ApiResponse<AuthResponse>.Ok(response, "Registration completed successfully."));
     }
 
     private static async Task<IResult> Login(
         LoginRequest request,
-        IAuthService authService,
+        LoginHandler handler,
         CancellationToken cancellationToken)
     {
-        var response = await authService.LoginAsync(request, cancellationToken);
+        var response = await handler.HandleAsync(request, cancellationToken);
 
         return Results.Ok(ApiResponse<AuthResponse>.Ok(response, "Login completed successfully."));
     }

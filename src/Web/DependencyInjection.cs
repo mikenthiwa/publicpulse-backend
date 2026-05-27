@@ -8,6 +8,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Web.Domain.Entities;
 using Web.Features.Auth;
+using Web.Features.Auth.Login;
+using Web.Features.Auth.Register;
+using Web.Features.Categories.ListCategories;
 using Web.Features.Reports;
 using Web.Features.Reports.CreateImageUploadSignature;
 using Web.Features.Reports.CreateReport;
@@ -124,11 +127,13 @@ public static class DependencyInjection
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(defaultConnection));
         builder.Services.AddScoped<IDatabaseHealthCheck, DatabaseHealthCheck>();
-        builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IReportImageCloudinaryService, CloudinaryReportImageService>();
         builder.Services.AddScoped<IReportService, ReportService>();
         builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        builder.Services.AddScoped<LoginHandler>();
+        builder.Services.AddScoped<RegisterHandler>();
+        builder.Services.AddScoped<ListCategoriesHandler>();
         builder.Services.AddScoped<CreateImageUploadSignatureHandler>();
         builder.Services.AddScoped<CreateReportHandler>();
         builder.Services.AddScoped<ListReportHandler>();
