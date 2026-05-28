@@ -4,15 +4,16 @@ using Microsoft.EntityFrameworkCore;
 using Web.Features.Auth;
 using Web.Features.Categories;
 using Web.Features.Reports;
+using Web.Features.Reports.UpdateReportStatus;
 using Web.Infrastructure.Identity;
 using Web.Infrastructure.Persistence;
 
 namespace Web.UnitTests.Features.Reports;
 
-public sealed class ReportServiceTests
+public sealed class UpdateReportStatusHandlerTests
 {
     [Fact]
-    public async Task UpdateStatusAsync_WhenUserIsNotCreator_ShouldThrowUnauthorizedAccessException()
+    public async Task HandleAsync_WhenUserIsNotCreator_ShouldThrowUnauthorizedAccessException()
     {
         await using var dbContext = CreateDbContext();
         var creator = CreateUser("creator@example.com");
@@ -30,9 +31,9 @@ public sealed class ReportServiceTests
         dbContext.Categories.Add(category);
         dbContext.Reports.Add(report);
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
-        var service = new ReportService(dbContext, new TestCurrentUser(otherUser.Id));
+        var handler = new UpdateReportStatusHandler(dbContext, new TestCurrentUser(otherUser.Id));
 
-        var action = async () => await service.UpdateStatusAsync(
+        var action = async () => await handler.HandleAsync(
             report.Id,
             new UpdateReportStatusRequest(ReportStatus.InProgress),
             CancellationToken.None);
@@ -41,7 +42,7 @@ public sealed class ReportServiceTests
     }
 
     [Fact]
-    public async Task UpdateStatusAsync_WhenUserIsCreator_ShouldUpdateStatus()
+    public async Task HandleAsync_WhenUserIsCreator_ShouldUpdateStatus()
     {
         await using var dbContext = CreateDbContext();
         var creator = CreateUser("creator@example.com");
@@ -59,9 +60,9 @@ public sealed class ReportServiceTests
         dbContext.Categories.Add(category);
         dbContext.Reports.Add(report);
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
-        var service = new ReportService(dbContext, new TestCurrentUser(creator.Id));
+        var handler = new UpdateReportStatusHandler(dbContext, new TestCurrentUser(creator.Id));
 
-        var updatedReport = await service.UpdateStatusAsync(
+        var updatedReport = await handler.HandleAsync(
             report.Id,
             new UpdateReportStatusRequest(ReportStatus.InProgress),
             CancellationToken.None);
@@ -72,7 +73,7 @@ public sealed class ReportServiceTests
     private static ApplicationDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase($"report-service-tests-{Guid.NewGuid()}")
+            .UseInMemoryDatabase($"update-report-status-handler-tests-{Guid.NewGuid()}")
             .Options;
 
         return new ApplicationDbContext(options);

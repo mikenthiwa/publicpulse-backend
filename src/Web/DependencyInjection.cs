@@ -18,9 +18,12 @@ using Web.Features.Auth.Login;
 using Web.Features.Auth.Register;
 using Web.Features.Categories.ListCategories;
 using Web.Features.Reports;
+using Web.Features.Reports.ConfirmReport;
 using Web.Features.Reports.CreateImageUploadSignature;
 using Web.Features.Reports.CreateReport;
+using Web.Features.Reports.GetReportById;
 using Web.Features.Reports.ListReport;
+using Web.Features.Reports.UpdateReportStatus;
 using Web.Infrastructure;
 using Web.Infrastructure.Identity;
 using Web.Infrastructure.Persistence;
@@ -182,7 +185,6 @@ public static class DependencyInjection
             options.UseNpgsql(defaultConnection));
         builder.Services.AddScoped<IDatabaseHealthCheck, DatabaseHealthCheck>();
         builder.Services.AddScoped<IReportImageCloudinaryService, CloudinaryReportImageService>();
-        builder.Services.AddScoped<IReportService, ReportService>();
         builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
         builder.Services.AddScoped<LoginHandler>();
@@ -191,6 +193,9 @@ public static class DependencyInjection
         builder.Services.AddScoped<CreateImageUploadSignatureHandler>();
         builder.Services.AddScoped<CreateReportHandler>();
         builder.Services.AddScoped<ListReportHandler>();
+        builder.Services.AddScoped<GetReportByIdHandler>();
+        builder.Services.AddScoped<ConfirmReportHandler>();
+        builder.Services.AddScoped<UpdateReportStatusHandler>();
         builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         builder.Services.AddFluentValidationAutoValidation(configuration =>
         {

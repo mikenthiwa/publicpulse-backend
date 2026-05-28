@@ -1,9 +1,12 @@
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using Web.Common.Models;
 using Web.Features.Reports;
+using Web.Features.Reports.ConfirmReport;
 using Web.Features.Reports.CreateImageUploadSignature;
 using Web.Features.Reports.CreateReport;
+using Web.Features.Reports.GetReportById;
 using Web.Features.Reports.ListReport;
+using Web.Features.Reports.UpdateReportStatus;
 using Web.Infrastructure;
 
 namespace Web.Endpoints;
@@ -66,20 +69,20 @@ public class Reports : EndpointGroupBase
 
     private static async Task<IResult> GetReportById(
         Guid id,
-        IReportService reportService,
+        GetReportByIdHandler handler,
         CancellationToken cancellationToken)
     {
-        var report = await reportService.GetByIdAsync(id, cancellationToken);
+        var report = await handler.HandleAsync(id, cancellationToken);
 
         return Results.Ok(ApiResponse<ReportResponse>.Ok(report, "Report retrieved successfully."));
     }
 
     private static async Task<IResult> ConfirmReport(
         Guid id,
-        IReportService reportService,
+        ConfirmReportHandler handler,
         CancellationToken cancellationToken)
     {
-        var confirmation = await reportService.ConfirmAsync(id, cancellationToken);
+        var confirmation = await handler.HandleAsync(id, cancellationToken);
 
         return Results.Ok(ApiResponse<ConfirmReportResponse>.Ok(
             confirmation,
@@ -89,10 +92,10 @@ public class Reports : EndpointGroupBase
     private static async Task<IResult> UpdateReportStatus(
         Guid id,
         UpdateReportStatusRequest request,
-        IReportService reportService,
+        UpdateReportStatusHandler handler,
         CancellationToken cancellationToken)
     {
-        var report = await reportService.UpdateStatusAsync(id, request, cancellationToken);
+        var report = await handler.HandleAsync(id, request, cancellationToken);
 
         return Results.Ok(ApiResponse<ReportResponse>.Ok(
             report,
