@@ -85,12 +85,68 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             TestContext.Current.CancellationToken);
 
         report.Id.Should().NotBeEmpty();
+        report.County.Should().Be("Nairobi");
+        report.RoadName.Should().Be("Kenyatta Avenue");
+        report.Latitude.Should().BeNull();
+        report.Longitude.Should().BeNull();
+        report.LocationLabel.Should().BeNull();
+        report.LocationSource.Should().BeNull();
         report.Status.Should().Be(ReportStatus.Reported);
         report.ConfirmationCount.Should().Be(0);
         report.Images.Should().HaveCount(2);
         report.Images.Should().OnlyContain(image => image.PublicId.StartsWith(_currentUserFolder!, StringComparison.Ordinal));
         report.Images.Should().OnlyContain(image =>
             image.ImageUrl == $"https://res.cloudinary.com/public-pulse/image/upload/v123/{EscapePublicId(image.PublicId)}");
+    }
+
+    [Fact]
+    public async Task CreateReport_WithOptionalCoordinateMetadata_ShouldPersistAndReturnLocationFields()
+    {
+        await AuthenticateAsync("location-metadata@example.com");
+        var request = CreateReportRequest(
+            latitude: -1.286389,
+            longitude: 36.817223,
+            locationLabel: "Kenyatta Avenue, Nairobi, Kenya",
+            locationSource: "mapbox");
+
+        var createResponse = await _client.PostAsJsonAsync(
+            "/api/Reports",
+            request,
+            TestContext.Current.CancellationToken);
+
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var createdReport = await ApiTestClient.ReadDataAsync<ReportResponse>(
+            createResponse,
+            TestContext.Current.CancellationToken);
+
+        createdReport.Latitude.Should().Be(-1.286389);
+        createdReport.Longitude.Should().Be(36.817223);
+        createdReport.LocationLabel.Should().Be("Kenyatta Avenue, Nairobi, Kenya");
+        createdReport.LocationSource.Should().Be("mapbox");
+
+        _client.DefaultRequestHeaders.Authorization = null;
+        var listResponse = await _client.GetAsync("/api/Reports", TestContext.Current.CancellationToken);
+        var reports = await ApiTestClient.ReadDataAsync<IReadOnlyList<ReportListItemResponse>>(
+            listResponse,
+            TestContext.Current.CancellationToken);
+
+        var listedReport = reports.Should().Contain(report => report.Id == createdReport.Id).Which;
+        listedReport.Latitude.Should().Be(-1.286389);
+        listedReport.Longitude.Should().Be(36.817223);
+        listedReport.LocationLabel.Should().Be("Kenyatta Avenue, Nairobi, Kenya");
+        listedReport.LocationSource.Should().Be("mapbox");
+
+        var detailResponse = await _client.GetAsync(
+            $"/api/Reports/{createdReport.Id}",
+            TestContext.Current.CancellationToken);
+        var detailReport = await ApiTestClient.ReadDataAsync<ReportResponse>(
+            detailResponse,
+            TestContext.Current.CancellationToken);
+
+        detailReport.Latitude.Should().Be(-1.286389);
+        detailReport.Longitude.Should().Be(36.817223);
+        detailReport.LocationLabel.Should().Be("Kenyatta Avenue, Nairobi, Kenya");
+        detailReport.LocationSource.Should().Be("mapbox");
     }
 
     [Fact]
@@ -425,7 +481,11 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         IReadOnlyList<CreateReportImageRequest>? images = null,
         string roadName = "Kenyatta Avenue",
         string signature = "valid-signature",
-        string? publicIdPrefix = null)
+        string? publicIdPrefix = null,
+        double? latitude = null,
+        double? longitude = null,
+        string? locationLabel = null,
+        string? locationSource = null)
     {
         return new CreateReportRequest(
             "A large pothole is damaging vehicles.",
@@ -434,7 +494,11 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
                 .Select(index => CreateImage(index, signature, publicIdPrefix))
                 .ToArray(),
             "Nairobi",
-            roadName);
+            roadName,
+            latitude,
+            longitude,
+            locationLabel,
+            locationSource);
     }
 
     private CreateReportImageRequest CreateImage(

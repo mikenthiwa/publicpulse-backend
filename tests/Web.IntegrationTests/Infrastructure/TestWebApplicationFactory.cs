@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Web.Features.Locations;
 using Web.Features.Reports;
 using Web.Infrastructure.Persistence;
 
@@ -22,11 +23,31 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
             services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
             services.RemoveAll<IReportImageCloudinaryService>();
+            services.RemoveAll<IReverseGeocodingProvider>();
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseInMemoryDatabase(_databaseName));
             services.AddScoped<IReportImageCloudinaryService, FakeReportImageCloudinaryService>();
+            services.AddScoped<IReverseGeocodingProvider, FakeReverseGeocodingProvider>();
             services.AddTransient<IStartupFilter, TestDatabaseStartupFilter>();
         });
+    }
+
+    private sealed class FakeReverseGeocodingProvider : IReverseGeocodingProvider
+    {
+        public Task<LocationLookupResponse> ReverseGeocodeAsync(
+            double latitude,
+            double longitude,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new LocationLookupResponse(
+                "Nairobi",
+                "Kenyatta Avenue",
+                "Kenyatta Avenue, Nairobi, Kenya",
+                latitude,
+                longitude,
+                "fake",
+                LocationConfidence.High));
+        }
     }
 
     private sealed class FakeReportImageCloudinaryService : IReportImageCloudinaryService

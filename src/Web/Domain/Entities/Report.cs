@@ -11,6 +11,10 @@ public sealed class Report : BaseAuditableEntity
     public Category Category { get; set; } = null!;
     public required string County { get; set; }
     public required string RoadName { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public string? LocationLabel { get; set; }
+    public string? LocationSource { get; set; }
     public ReportStatus Status { get; set; } = ReportStatus.Reported;
     public User CreatedByUser { get; set; } = null!;
     public List<ReportConfirmation> Confirmations { get; } = [];

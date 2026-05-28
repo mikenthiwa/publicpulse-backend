@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Web.Features.Locations;
 using Web.Features.Reports;
 using ValidationException = Web.Common.Exceptions.ValidationException;
 
@@ -15,6 +16,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         { typeof(InvalidOperationException), HandleBadRequestException },
         { typeof(UnauthorizedAccessException), HandleForbiddenException },
         { typeof(ReportImageUploadException), HandleBadGatewayException },
+        { typeof(ReverseGeocodingProviderException), HandleBadGatewayException },
         { typeof(ValidationException), HandleValidationException }
     };
 
@@ -129,7 +131,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         var problemDetails = new ProblemDetails
         {
             Status = StatusCodes.Status502BadGateway,
-            Title = "Image upload failed.",
+            Title = "Upstream provider failed.",
             Detail = exception.Message,
             Instance = httpContext.Request.Path,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.6.3"

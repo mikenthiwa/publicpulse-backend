@@ -7,7 +7,11 @@ public sealed record CreateReportRequest(
     Guid CategoryId,
     IReadOnlyList<CreateReportImageRequest> Images,
     string County,
-    string RoadName);
+    string RoadName,
+    double? Latitude = null,
+    double? Longitude = null,
+    string? LocationLabel = null,
+    string? LocationSource = null);
 
 public sealed record CreateReportImageRequest(
     string PublicId,
@@ -30,6 +34,10 @@ public sealed record ReportListItemResponse(
     string CategoryName,
     string County,
     string RoadName,
+    double? Latitude,
+    double? Longitude,
+    string? LocationLabel,
+    string? LocationSource,
     ReportStatus Status,
     int ConfirmationCount,
     DateTimeOffset Created);
@@ -42,6 +50,10 @@ public sealed record ReportResponse(
     IReadOnlyList<ReportImageResponse> Images,
     string County,
     string RoadName,
+    double? Latitude,
+    double? Longitude,
+    string? LocationLabel,
+    string? LocationSource,
     ReportStatus Status,
     int ConfirmationCount,
     DateTimeOffset Created,

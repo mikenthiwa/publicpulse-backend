@@ -50,6 +50,14 @@ public class CreateReportHandler(
             CategoryId = request.CategoryId,
             County = request.County.Trim(),
             RoadName = request.RoadName.Trim(),
+            Latitude = request.Latitude,
+            Longitude = request.Longitude,
+            LocationLabel = string.IsNullOrWhiteSpace(request.LocationLabel)
+                ? null
+                : request.LocationLabel.Trim(),
+            LocationSource = string.IsNullOrWhiteSpace(request.LocationSource)
+                ? null
+                : request.LocationSource.Trim(),
             CreatedBy = userId
         };
 
@@ -93,6 +101,10 @@ public class CreateReportHandler(
                 .ToArray(),
             report.County,
             report.RoadName,
+            report.Latitude,
+            report.Longitude,
+            report.LocationLabel,
+            report.LocationSource,
             report.Status,
             confirmationCount,
             report.Created,

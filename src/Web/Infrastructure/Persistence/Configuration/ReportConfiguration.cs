@@ -22,6 +22,12 @@ public sealed class ReportConfiguration : IEntityTypeConfiguration<Report>
             .HasMaxLength(200)
             .IsRequired();
 
+        builder.Property(r => r.LocationLabel)
+            .HasMaxLength(500);
+
+        builder.Property(r => r.LocationSource)
+            .HasMaxLength(100);
+
         builder.Property(r => r.CreatedBy)
             .IsRequired();
 

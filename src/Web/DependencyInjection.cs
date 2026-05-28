@@ -17,6 +17,7 @@ using Web.Features.Auth;
 using Web.Features.Auth.Login;
 using Web.Features.Auth.Register;
 using Web.Features.Categories.ListCategories;
+using Web.Features.Locations;
 using Web.Features.Reports;
 using Web.Features.Reports.ConfirmReport;
 using Web.Features.Reports.CreateImageUploadSignature;
@@ -103,6 +104,13 @@ public static class DependencyInjection
         builder.Services.AddScoped<ICurrentUser, CurrentUser>();
         builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
         builder.Services.Configure<CloudinaryOptions>(builder.Configuration.GetSection(CloudinaryOptions.SectionName));
+        builder.Services.Configure<MapboxOptions>(builder.Configuration.GetSection(MapboxOptions.SectionName));
+        builder.Services.PostConfigure<MapboxOptions>(options =>
+        {
+            options.AccessToken = string.IsNullOrWhiteSpace(options.AccessToken)
+                ? builder.Configuration["MAPBOX_ACCESS_TOKEN"]
+                : options.AccessToken;
+        });
         builder.Services.AddSingleton(serviceProvider =>
         {
             var cloudinaryOptions = serviceProvider.GetRequiredService<IOptions<CloudinaryOptions>>().Value;
@@ -184,12 +192,17 @@ public static class DependencyInjection
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(defaultConnection));
         builder.Services.AddScoped<IDatabaseHealthCheck, DatabaseHealthCheck>();
+        builder.Services.AddHttpClient<IReverseGeocodingProvider, MapboxReverseGeocodingProvider>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5);
+        });
         builder.Services.AddScoped<IReportImageCloudinaryService, CloudinaryReportImageService>();
         builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
         builder.Services.AddScoped<LoginHandler>();
         builder.Services.AddScoped<RegisterHandler>();
         builder.Services.AddScoped<ListCategoriesHandler>();
+        builder.Services.AddScoped<ReverseGeocodeHandler>();
         builder.Services.AddScoped<CreateImageUploadSignatureHandler>();
         builder.Services.AddScoped<CreateReportHandler>();
         builder.Services.AddScoped<ListReportHandler>();

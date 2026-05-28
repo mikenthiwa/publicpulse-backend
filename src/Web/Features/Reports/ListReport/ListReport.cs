@@ -16,6 +16,10 @@ public sealed class ListReportHandler(ApplicationDbContext dbContext)
                 report.Category.Name,
                 report.County,
                 report.RoadName,
+                report.Latitude,
+                report.Longitude,
+                report.LocationLabel,
+                report.LocationSource,
                 report.Status,
                 report.Confirmations.Count,
                 report.Created))
