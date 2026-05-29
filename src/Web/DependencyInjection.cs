@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using Web.Common.Factory;
+using Web.Common.Mappings;
 using Web.Domain.Entities;
 using Web.Features.Auth;
 using Web.Features.Auth.Login;
@@ -128,66 +129,7 @@ public static class DependencyInjection
                 cloudinaryOptions.ApiKey,
                 cloudinaryOptions.ApiSecret));
         });
-        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtOptions.Issuer,
-                    ValidateAudience = true,
-                    ValidAudience = jwtOptions.Audience,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.FromMinutes(1)
-                };
-
-                options.Events = new JwtBearerEvents
-                {
-                    OnChallenge = context =>
-                    {
-                        context.HandleResponse();
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        var problemDetails = new ProblemDetails
-                        {
-                            Status = StatusCodes.Status401Unauthorized,
-                            Title = "Unauthorized.",
-                            Detail = "Authentication is required to access this resource.",
-                            Instance = context.Request.Path,
-                            Type = "https://tools.ietf.org/html/rfc7235#section-3.1"
-                        };
-
-                        problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
-
-                        return context.Response.WriteAsJsonAsync(
-                            problemDetails,
-                            (System.Text.Json.JsonSerializerOptions?)null,
-                            "application/problem+json",
-                            CancellationToken.None);
-                    },
-                    OnForbidden = context =>
-                    {
-                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                        var problemDetails = new ProblemDetails
-                        {
-                            Status = StatusCodes.Status403Forbidden,
-                            Title = "Forbidden.",
-                            Detail = "You are not allowed to access this resource.",
-                            Instance = context.Request.Path,
-                            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.3"
-                        };
-
-                        problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
-
-                        return context.Response.WriteAsJsonAsync(
-                            problemDetails,
-                            (System.Text.Json.JsonSerializerOptions?)null,
-                            "application/problem+json",
-                            CancellationToken.None);
-                    }
-                };
-            });
+        builder.Services.AddAuth(builder.Configuration);
         builder.Services.AddAuthorization();
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(defaultConnection));
