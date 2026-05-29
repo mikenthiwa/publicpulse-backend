@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace Web.Infrastructure;
 
 public static class WebApplicationExtensions
@@ -14,7 +16,7 @@ public static class WebApplicationExtensions
     public static WebApplication MapEndpoints(this WebApplication app)
     {
         var endpointGroupType = typeof(EndpointGroupBase);
-        var assembly = typeof(EndpointGroupBase).Assembly;
+        var assembly = Assembly.GetExecutingAssembly();
 
         var endpointGroups = assembly.GetExportedTypes()
             .Where(type => type.IsSubclassOf(endpointGroupType))

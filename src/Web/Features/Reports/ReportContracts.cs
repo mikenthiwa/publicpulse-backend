@@ -1,49 +1,67 @@
+using Web.Domain.Enums;
+
 namespace Web.Features.Reports;
 
 public sealed record CreateReportRequest(
-    string Title,
     string Description,
     Guid CategoryId,
-    string PhotoUrl,
+    IReadOnlyList<CreateReportImageRequest> Images,
     string County,
-    string RoadName);
+    string RoadName,
+    double? Latitude = null,
+    double? Longitude = null,
+    string? LocationLabel = null,
+    string? LocationSource = null);
 
-public sealed record CreateReportImageUploadUrlRequest(
-    string FileName,
-    string ContentType,
-    long ContentLength);
+public sealed record CreateReportImageRequest(
+    string PublicId,
+    string Version,
+    string Signature);
 
-public sealed record ReportImageUploadUrlResponse(
-    string UploadUrl,
-    string ImageUrl,
-    string ImageKey,
-    IReadOnlyDictionary<string, string> Headers);
+public sealed record ReportImageUploadSignatureResponse(
+    string CloudName,
+    string ApiKey,
+    long Timestamp,
+    string Folder,
+    string UploadPreset,
+    string Signature);
 
 public sealed record UpdateReportStatusRequest(ReportStatus Status);
 
 public sealed record ReportListItemResponse(
     Guid Id,
-    string Title,
     Guid CategoryId,
     string CategoryName,
     string County,
     string RoadName,
+    double? Latitude,
+    double? Longitude,
+    string? LocationLabel,
+    string? LocationSource,
     ReportStatus Status,
     int ConfirmationCount,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset Created);
 
 public sealed record ReportResponse(
     Guid Id,
-    string Title,
     string Description,
     Guid CategoryId,
     string CategoryName,
-    string PhotoUrl,
+    IReadOnlyList<ReportImageResponse> Images,
     string County,
     string RoadName,
+    double? Latitude,
+    double? Longitude,
+    string? LocationLabel,
+    string? LocationSource,
     ReportStatus Status,
     int ConfirmationCount,
-    DateTimeOffset CreatedAtUtc,
-    DateTimeOffset? UpdatedAtUtc);
+    DateTimeOffset Created,
+    DateTimeOffset? LastModified);
+
+public sealed record ReportImageResponse(
+    Guid Id,
+    string ImageUrl,
+    string PublicId);
 
 public sealed record ConfirmReportResponse(Guid ReportId, int ConfirmationCount);

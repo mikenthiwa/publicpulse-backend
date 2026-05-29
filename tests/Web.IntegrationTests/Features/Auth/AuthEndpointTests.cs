@@ -53,6 +53,25 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
         secondResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
+    public static TheoryData<RegisterRequest> InvalidRegisterRequests => new()
+    {
+        new RegisterRequest("", "Password123!"),
+        new RegisterRequest("register-missing-password@example.com", ""),
+        new RegisterRequest("register-short-password@example.com", "short")
+    };
+
+    [Theory]
+    [MemberData(nameof(InvalidRegisterRequests))]
+    public async Task Register_WithInvalidInput_ShouldReturnBadRequest(RegisterRequest request)
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/Auth/register",
+            request,
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     [Fact]
     public async Task Login_WithValidCredentials_ShouldReturnToken()
     {
@@ -88,6 +107,25 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
         var response = await _client.PostAsJsonAsync(
             "/api/Auth/login",
             new LoginRequest("invalid-login@example.com", "WrongPassword123!"),
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    public static TheoryData<LoginRequest> InvalidLoginRequests => new()
+    {
+        new LoginRequest("", "Password123!"),
+        new LoginRequest("login-missing-password@example.com", ""),
+        new LoginRequest("login-short-password@example.com", "short")
+    };
+
+    [Theory]
+    [MemberData(nameof(InvalidLoginRequests))]
+    public async Task Login_WithInvalidInput_ShouldReturnBadRequest(LoginRequest request)
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/Auth/login",
+            request,
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);

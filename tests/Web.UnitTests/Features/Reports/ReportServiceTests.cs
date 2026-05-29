@@ -4,38 +4,16 @@ using Microsoft.EntityFrameworkCore;
 using Web.Features.Auth;
 using Web.Features.Categories;
 using Web.Features.Reports;
+using Web.Features.Reports.UpdateReportStatus;
+using Web.Infrastructure.Identity;
 using Web.Infrastructure.Persistence;
 
 namespace Web.UnitTests.Features.Reports;
 
-public sealed class ReportServiceTests
+public sealed class UpdateReportStatusHandlerTests
 {
     [Fact]
-    public async Task CreateAsync_WithMissingTitle_ShouldThrowArgumentException()
-    {
-        await using var dbContext = CreateDbContext();
-        var user = CreateUser();
-        dbContext.Users.Add(user);
-        dbContext.Categories.Add(CreateCategory());
-        await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
-        var service = new ReportService(dbContext, new StubReportImageUploadService());
-
-        var action = async () => await service.CreateAsync(
-            new CreateReportRequest(
-                "",
-                "Description",
-                Category.RoadsId,
-                "https://example.com/photo.jpg",
-                "Nairobi",
-                "Kenyatta Avenue"),
-            CreatePrincipal(user.Id),
-            CancellationToken.None);
-
-        await action.Should().ThrowAsync<ArgumentException>();
-    }
-
-    [Fact]
-    public async Task UpdateStatusAsync_WhenUserIsNotCreator_ShouldThrowUnauthorizedAccessException()
+    public async Task HandleAsync_WhenUserIsNotCreator_ShouldThrowUnauthorizedAccessException()
     {
         await using var dbContext = CreateDbContext();
         var creator = CreateUser("creator@example.com");
@@ -43,33 +21,59 @@ public sealed class ReportServiceTests
         var category = CreateCategory();
         var report = new Report
         {
-            Title = "Pothole",
             Description = "Large pothole",
             CategoryId = category.Id,
-            PhotoUrl = "https://example.com/photo.jpg",
             County = "Nairobi",
             RoadName = "Kenyatta Avenue",
-            CreatedByUserId = creator.Id
+            CreatedBy = creator.Id
         };
         dbContext.Users.AddRange(creator, otherUser);
         dbContext.Categories.Add(category);
         dbContext.Reports.Add(report);
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
-        var service = new ReportService(dbContext, new StubReportImageUploadService());
+        var handler = new UpdateReportStatusHandler(dbContext, new TestCurrentUser(otherUser.Id));
 
-        var action = async () => await service.UpdateStatusAsync(
+        var action = async () => await handler.HandleAsync(
             report.Id,
             new UpdateReportStatusRequest(ReportStatus.InProgress),
-            CreatePrincipal(otherUser.Id),
             CancellationToken.None);
 
         await action.Should().ThrowAsync<UnauthorizedAccessException>();
     }
 
+    [Fact]
+    public async Task HandleAsync_WhenUserIsCreator_ShouldUpdateStatus()
+    {
+        await using var dbContext = CreateDbContext();
+        var creator = CreateUser("creator@example.com");
+        var category = CreateCategory();
+        var report = new Report
+        {
+            Description = "Large pothole",
+            CategoryId = category.Id,
+            Category = category,
+            County = "Nairobi",
+            RoadName = "Kenyatta Avenue",
+            CreatedBy = creator.Id
+        };
+        dbContext.Users.Add(creator);
+        dbContext.Categories.Add(category);
+        dbContext.Reports.Add(report);
+        await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var handler = new UpdateReportStatusHandler(dbContext, new TestCurrentUser(creator.Id));
+
+        var updatedReport = await handler.HandleAsync(
+            report.Id,
+            new UpdateReportStatusRequest(ReportStatus.InProgress),
+            CancellationToken.None);
+
+        updatedReport.Status.Should().Be(ReportStatus.InProgress);
+    }
+
     private static ApplicationDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase($"report-service-tests-{Guid.NewGuid()}")
+            .UseInMemoryDatabase($"update-report-status-handler-tests-{Guid.NewGuid()}")
             .Options;
 
         return new ApplicationDbContext(options);
@@ -93,31 +97,19 @@ public sealed class ReportServiceTests
         };
     }
 
-    private static ClaimsPrincipal CreatePrincipal(Guid userId)
+    private sealed class TestCurrentUser(Guid userId) : ICurrentUser
     {
-        var identity = new ClaimsIdentity(
-            [new Claim(ClaimTypes.NameIdentifier, userId.ToString())],
-            authenticationType: "Test");
+        public ClaimsPrincipal User { get; } = CreatePrincipal(userId);
 
-        return new ClaimsPrincipal(identity);
-    }
+        public Guid UserId { get; } = userId;
 
-    private sealed class StubReportImageUploadService : IReportImageUploadService
-    {
-        public Task<ReportImageUploadUrlResponse> CreateUploadUrlAsync(
-            CreateReportImageUploadUrlRequest request,
-            ClaimsPrincipal user,
-            CancellationToken cancellationToken)
+        private static ClaimsPrincipal CreatePrincipal(Guid userId)
         {
-            throw new NotImplementedException();
-        }
+            var identity = new ClaimsIdentity(
+                [new Claim(ClaimTypes.NameIdentifier, userId.ToString())],
+                authenticationType: "Test");
 
-        public Task MarkIssuedImageAsUsedAsync(
-            string imageUrl,
-            Guid userId,
-            CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
+            return new ClaimsPrincipal(identity);
         }
     }
 }

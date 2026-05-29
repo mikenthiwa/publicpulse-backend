@@ -1,135 +1,74 @@
-using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
+using CloudinaryDotNet;
 using Microsoft.Extensions.Options;
-using Web.Infrastructure.Persistence;
 
 namespace Web.Features.Reports;
 
-public interface IReportImageUploadService
+public interface IReportImageCloudinaryService
 {
-    Task<ReportImageUploadUrlResponse> CreateUploadUrlAsync(
-        CreateReportImageUploadUrlRequest request,
-        ClaimsPrincipal user,
-        CancellationToken cancellationToken);
+    ReportImageUploadSignatureResponse CreateUploadSignature(Guid userId);
 
-    Task MarkIssuedImageAsUsedAsync(
-        string imageUrl,
-        Guid userId,
-        CancellationToken cancellationToken);
+    bool IsUploadResultValid(CreateReportImageRequest image);
+
+    string GetUserFolder(Guid userId);
+
+    string CreateImageUrl(string publicId, string version);
 }
 
-public sealed class ReportImageUploadService(
-    ApplicationDbContext dbContext,
-    IReportImageStorageService storageService,
-    IOptions<ReportImageStorageOptions> options) : IReportImageUploadService
+public sealed class ReportImageUploadException(string message) : Exception(message);
+
+public sealed class CloudinaryReportImageService(
+    Cloudinary cloudinary,
+    IOptions<CloudinaryOptions> options) : IReportImageCloudinaryService
 {
-    private static readonly IReadOnlyDictionary<string, string> FileExtensionsByContentType =
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    private readonly CloudinaryOptions _options = options.Value;
+
+    public ReportImageUploadSignatureResponse CreateUploadSignature(Guid userId)
+    {
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var folder = GetUserFolder(userId);
+        var parameters = new Dictionary<string, object>
         {
-            ["image/jpeg"] = ".jpg",
-            ["image/png"] = ".png",
-            ["image/webp"] = ".webp",
-            ["image/gif"] = ".gif"
+            ["folder"] = folder,
+            ["timestamp"] = timestamp,
+            ["upload_preset"] = _options.UploadPreset!
         };
+        var signature = cloudinary.Api.SignParameters(parameters);
 
-    private readonly ReportImageStorageOptions _options = options.Value;
-
-    public async Task<ReportImageUploadUrlResponse> CreateUploadUrlAsync(
-        CreateReportImageUploadUrlRequest request,
-        ClaimsPrincipal user,
-        CancellationToken cancellationToken)
-    {
-        ValidateUploadMetadata(request);
-
-        var userId = ReportUserClaims.GetUserId(user);
-        var expiresAtUtc = DateTimeOffset.UtcNow.AddMinutes(_options.SignedUploadExpiryMinutes);
-        var imageKey = CreateImageKey(userId, request.ContentType);
-        var uploadTarget = storageService.CreateUploadTarget(
-            imageKey,
-            request.ContentType.Trim(),
-            request.ContentLength,
-            expiresAtUtc);
-
-        dbContext.ReportImageUploads.Add(new ReportImageUpload
-        {
-            ImageKey = imageKey,
-            ImageUrl = uploadTarget.ImageUrl,
-            ContentType = request.ContentType.Trim(),
-            ContentLength = request.ContentLength,
-            OriginalFileName = Path.GetFileName(request.FileName.Trim()),
-            CreatedByUserId = userId,
-            ExpiresAtUtc = expiresAtUtc
-        });
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return new ReportImageUploadUrlResponse(
-            uploadTarget.UploadUrl,
-            uploadTarget.ImageUrl,
-            imageKey,
-            uploadTarget.Headers);
+        return new ReportImageUploadSignatureResponse(
+            _options.CloudName!,
+            _options.ApiKey!,
+            timestamp,
+            folder,
+            _options.UploadPreset!,
+            signature);
     }
 
-    public async Task MarkIssuedImageAsUsedAsync(
-        string imageUrl,
-        Guid userId,
-        CancellationToken cancellationToken)
+    public bool IsUploadResultValid(CreateReportImageRequest image)
     {
-        var trimmedImageUrl = imageUrl.Trim();
-        var issuedUpload = await dbContext.ReportImageUploads
-            .SingleOrDefaultAsync(
-                upload => upload.ImageUrl == trimmedImageUrl && upload.CreatedByUserId == userId,
-                cancellationToken);
-
-        if (issuedUpload is null)
-        {
-            throw new ArgumentException("Photo URL must reference an image upload issued by this API.");
-        }
-
-        if (issuedUpload.ExpiresAtUtc <= DateTimeOffset.UtcNow)
-        {
-            throw new ArgumentException("Issued image upload has expired.");
-        }
-
-        if (issuedUpload.UsedAtUtc is not null)
-        {
-            throw new ArgumentException("Issued image upload has already been used.");
-        }
-
-        issuedUpload.UsedAtUtc = DateTimeOffset.UtcNow;
+        return cloudinary.Api.VerifyApiResponseSignature(
+            image.PublicId,
+            image.Version,
+            image.Signature);
     }
 
-    private void ValidateUploadMetadata(CreateReportImageUploadUrlRequest request)
+    public string GetUserFolder(Guid userId)
     {
-        if (string.IsNullOrWhiteSpace(request.FileName))
-        {
-            throw new ArgumentException("File name is required.");
-        }
+        var rootFolder = string.IsNullOrWhiteSpace(_options.Folder)
+            ? "public-pulse/reports"
+            : _options.Folder.Trim().Trim('/');
 
-        if (string.IsNullOrWhiteSpace(request.ContentType))
-        {
-            throw new ArgumentException("Content type is required.");
-        }
-
-        if (request.ContentLength <= 0)
-        {
-            throw new ArgumentException("Content length is required.");
-        }
-
-        if (!FileExtensionsByContentType.ContainsKey(request.ContentType.Trim()))
-        {
-            throw new ArgumentException("Content type is not supported.");
-        }
-
-        if (request.ContentLength > _options.MaxFileSizeBytes)
-        {
-            throw new ArgumentException("File size exceeds the 5 MB limit.");
-        }
+        return $"{rootFolder}/{userId:N}";
     }
 
-    private static string CreateImageKey(Guid userId, string contentType)
+    public string CreateImageUrl(string publicId, string version)
     {
-        var extension = FileExtensionsByContentType[contentType.Trim()];
-        return $"reports/{userId:N}/{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid():N}{extension}";
+        var escapedPublicId = string.Join(
+            "/",
+            publicId
+                .Trim()
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .Select(Uri.EscapeDataString));
+
+        return $"https://res.cloudinary.com/{_options.CloudName}/image/upload/v{version.Trim()}/{escapedPublicId}";
     }
 }

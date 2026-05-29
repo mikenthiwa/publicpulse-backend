@@ -22,33 +22,7 @@ namespace Web.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Web.Features.Auth.User", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("Web.Features.Categories.Category", b =>
+            modelBuilder.Entity("Web.Domain.Entities.Category", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -97,7 +71,7 @@ namespace Web.Infrastructure.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Web.Features.Reports.Report", b =>
+            modelBuilder.Entity("Web.Domain.Entities.Report", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -111,10 +85,10 @@ namespace Web.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                    b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("CreatedByUserId")
+                    b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Description")
@@ -122,10 +96,22 @@ namespace Web.Infrastructure.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
-                    b.Property<string>("PhotoUrl")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)");
+                    b.Property<DateTimeOffset?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("LocationLabel")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("LocationSource")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("RoadName")
                         .IsRequired()
@@ -135,30 +121,28 @@ namespace Web.Infrastructure.Persistence.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("CreatedByUserId");
+                    b.HasIndex("CreatedBy");
 
-                    b.ToTable("Reports");
+                    b.ToTable("Reports", (string)null);
                 });
 
-            modelBuilder.Entity("Web.Features.Reports.ReportConfirmation", b =>
+            modelBuilder.Entity("Web.Domain.Entities.ReportConfirmation", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("LastModified")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("ReportId")
@@ -171,71 +155,87 @@ namespace Web.Infrastructure.Persistence.Migrations
                     b.ToTable("ReportConfirmations");
                 });
 
-            modelBuilder.Entity("Web.Features.Reports.ReportImageUpload", b =>
+            modelBuilder.Entity("Web.Domain.Entities.ReportImage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<long>("ContentLength")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                    b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("CreatedByUserId")
+                    b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("ExpiresAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ImageKey")
-                        .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasMaxLength(2048)
                         .HasColumnType("character varying(2048)");
 
-                    b.Property<string>("OriginalFileName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<DateTimeOffset?>("UsedAtUtc")
+                    b.Property<DateTimeOffset?>("LastModified")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PublicId")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("ImageKey")
+                    b.HasIndex("PublicId")
                         .IsUnique();
 
-                    b.HasIndex("ImageUrl")
-                        .IsUnique();
+                    b.HasIndex("ReportId");
 
-                    b.ToTable("ReportImageUploads");
+                    b.ToTable("ReportImages", (string)null);
                 });
 
-            modelBuilder.Entity("Web.Features.Reports.Report", b =>
+            modelBuilder.Entity("Web.Domain.Entities.User", b =>
                 {
-                    b.HasOne("Web.Features.Categories.Category", "Category")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTimeOffset?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Web.Domain.Entities.Report", b =>
+                {
+                    b.HasOne("Web.Domain.Entities.Category", "Category")
                         .WithMany("Reports")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Web.Features.Auth.User", "CreatedByUser")
+                    b.HasOne("Web.Domain.Entities.User", "CreatedByUser")
                         .WithMany()
-                        .HasForeignKey("CreatedByUserId")
+                        .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -244,9 +244,9 @@ namespace Web.Infrastructure.Persistence.Migrations
                     b.Navigation("CreatedByUser");
                 });
 
-            modelBuilder.Entity("Web.Features.Reports.ReportConfirmation", b =>
+            modelBuilder.Entity("Web.Domain.Entities.ReportConfirmation", b =>
                 {
-                    b.HasOne("Web.Features.Reports.Report", "Report")
+                    b.HasOne("Web.Domain.Entities.Report", "Report")
                         .WithMany("Confirmations")
                         .HasForeignKey("ReportId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -255,25 +255,27 @@ namespace Web.Infrastructure.Persistence.Migrations
                     b.Navigation("Report");
                 });
 
-            modelBuilder.Entity("Web.Features.Reports.ReportImageUpload", b =>
+            modelBuilder.Entity("Web.Domain.Entities.ReportImage", b =>
                 {
-                    b.HasOne("Web.Features.Auth.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("Web.Domain.Entities.Report", "Report")
+                        .WithMany("Images")
+                        .HasForeignKey("ReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("CreatedByUser");
+                    b.Navigation("Report");
                 });
 
-            modelBuilder.Entity("Web.Features.Categories.Category", b =>
+            modelBuilder.Entity("Web.Domain.Entities.Category", b =>
                 {
                     b.Navigation("Reports");
                 });
 
-            modelBuilder.Entity("Web.Features.Reports.Report", b =>
+            modelBuilder.Entity("Web.Domain.Entities.Report", b =>
                 {
                     b.Navigation("Confirmations");
+
+                    b.Navigation("Images");
                 });
 #pragma warning restore 612, 618
         }

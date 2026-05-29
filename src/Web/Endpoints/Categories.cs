@@ -1,8 +1,7 @@
-using Microsoft.EntityFrameworkCore;
-using Web.Contracts;
+using Web.Common.Models;
 using Web.Features.Categories;
+using Web.Features.Categories.ListCategories;
 using Web.Infrastructure;
-using Web.Infrastructure.Persistence;
 
 namespace Web.Endpoints;
 
@@ -15,14 +14,10 @@ public class Categories : EndpointGroupBase
     }
 
     private static async Task<IResult> GetCategories(
-        ApplicationDbContext dbContext,
+        ListCategoriesHandler handler,
         CancellationToken cancellationToken)
     {
-        var categories = await dbContext.Categories
-            .AsNoTracking()
-            .OrderBy(category => category.Name)
-            .Select(category => new CategoryResponse(category.Id, category.Name, category.Description))
-            .ToListAsync(cancellationToken);
+        var categories = await handler.HandleAsync(cancellationToken);
 
         return Results.Ok(ApiResponse<IReadOnlyList<CategoryResponse>>.Ok(
             categories,

@@ -1,4 +1,4 @@
-using Web.Contracts;
+using Web.Common.Models;
 using Web.Infrastructure;
 using Web.Infrastructure.Persistence;
 

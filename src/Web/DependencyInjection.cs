@@ -1,12 +1,33 @@
+using System.Diagnostics;
+using System.Reflection;
 using System.Text;
+using CloudinaryDotNet;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
+using Web.Common.Factory;
+using Web.Common.Mappings;
+using Web.Domain.Entities;
 using Web.Features.Auth;
+using Web.Features.Auth.Login;
+using Web.Features.Auth.Register;
+using Web.Features.Categories.ListCategories;
+using Web.Features.Locations;
 using Web.Features.Reports;
+using Web.Features.Reports.ConfirmReport;
+using Web.Features.Reports.CreateImageUploadSignature;
+using Web.Features.Reports.CreateReport;
+using Web.Features.Reports.GetReportById;
+using Web.Features.Reports.ListReport;
+using Web.Features.Reports.UpdateReportStatus;
 using Web.Infrastructure;
+using Web.Infrastructure.Identity;
 using Web.Infrastructure.Persistence;
 
 namespace Web;
@@ -16,7 +37,7 @@ public static class DependencyInjection
     public static IHostApplicationBuilder AddWebServices(this IHostApplicationBuilder builder)
     {
         var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is required.");
-
+        
         var jwtOptions = builder.Configuration
             .GetSection(JwtOptions.SectionName)
             .Get<JwtOptions>();
@@ -80,34 +101,62 @@ public static class DependencyInjection
         });
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<ICurrentUser, CurrentUser>();
         builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
-        builder.Services.Configure<ReportImageStorageOptions>(builder.Configuration.GetSection(ReportImageStorageOptions.SectionName));
-        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
+        builder.Services.Configure<CloudinaryOptions>(builder.Configuration.GetSection(CloudinaryOptions.SectionName));
+        builder.Services.Configure<MapboxOptions>(builder.Configuration.GetSection(MapboxOptions.SectionName));
+        builder.Services.PostConfigure<MapboxOptions>(options =>
+        {
+            options.AccessToken = string.IsNullOrWhiteSpace(options.AccessToken)
+                ? builder.Configuration["MAPBOX_ACCESS_TOKEN"]
+                : options.AccessToken;
+        });
+        builder.Services.AddSingleton(serviceProvider =>
+        {
+            var cloudinaryOptions = serviceProvider.GetRequiredService<IOptions<CloudinaryOptions>>().Value;
+
+            if (string.IsNullOrWhiteSpace(cloudinaryOptions.CloudName)
+                || string.IsNullOrWhiteSpace(cloudinaryOptions.ApiKey)
+                || string.IsNullOrWhiteSpace(cloudinaryOptions.ApiSecret)
+                || string.IsNullOrWhiteSpace(cloudinaryOptions.UploadPreset))
             {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtOptions.Issuer,
-                    ValidateAudience = true,
-                    ValidAudience = jwtOptions.Audience,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.FromMinutes(1)
-                };
-            });
+                throw new ReportImageUploadException("Cloudinary configuration is missing.");
+            }
+
+            return new Cloudinary(new Account(
+                cloudinaryOptions.CloudName,
+                cloudinaryOptions.ApiKey,
+                cloudinaryOptions.ApiSecret));
+        });
+        builder.Services.AddAuth(builder.Configuration);
         builder.Services.AddAuthorization();
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(defaultConnection));
         builder.Services.AddScoped<IDatabaseHealthCheck, DatabaseHealthCheck>();
-        builder.Services.AddScoped<IAuthService, AuthService>();
-        builder.Services.AddScoped<IReportImageUploadService, ReportImageUploadService>();
-        builder.Services.AddScoped<IReportImageStorageService, ReportImageStorageService>();
-        builder.Services.AddScoped<IReportService, ReportService>();
+        builder.Services.AddHttpClient<IReverseGeocodingProvider, MapboxReverseGeocodingProvider>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5);
+        });
+        builder.Services.AddScoped<IReportImageCloudinaryService, CloudinaryReportImageService>();
         builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
-
+        builder.Services.AddScoped<LoginHandler>();
+        builder.Services.AddScoped<RegisterHandler>();
+        builder.Services.AddScoped<ListCategoriesHandler>();
+        builder.Services.AddScoped<ReverseGeocodeHandler>();
+        builder.Services.AddScoped<CreateImageUploadSignatureHandler>();
+        builder.Services.AddScoped<CreateReportHandler>();
+        builder.Services.AddScoped<ListReportHandler>();
+        builder.Services.AddScoped<GetReportByIdHandler>();
+        builder.Services.AddScoped<ConfirmReportHandler>();
+        builder.Services.AddScoped<UpdateReportStatusHandler>();
+        builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        builder.Services.AddFluentValidationAutoValidation(configuration =>
+        {
+            configuration.OverrideDefaultResultFactoryWith<CustomResultFactory>();
+        });
+        
         return builder;
     }
 }
