@@ -1,5 +1,6 @@
 using Web;
 using Web.Infrastructure;
+using Web.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
+    await app.InitialiseAsync();
 }
 
 app.UseExceptionHandler();

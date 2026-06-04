@@ -38,6 +38,7 @@ public static class DependencyInjection
     {
         var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is required.");
         
+        
         var jwtOptions = builder.Configuration
             .GetSection(JwtOptions.SectionName)
             .Get<JwtOptions>();
@@ -99,6 +100,7 @@ public static class DependencyInjection
                 }
             });
         });
+        builder.Services.AddScoped<ApplicationDbContextInitialiser>();
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddHttpContextAccessor();
