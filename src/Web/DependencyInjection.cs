@@ -63,21 +63,13 @@ public static class DependencyInjection
                 .Where(origin => !string.IsNullOrWhiteSpace(origin))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray() ?? [];
-
+            
             options.AddPolicy(CorsOptions.PolicyName, policy =>
             {
-                if (allowedOrigins.Length > 0)
-                {
-                    policy.WithOrigins(allowedOrigins);
-                }
-                else
-                {
-                    policy.AllowAnyOrigin();
-                }
-
-                policy
-                    .AllowAnyHeader()
-                    .AllowAnyMethod();
+                policy.WithOrigins(allowedOrigins)
+                    .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                    .WithHeaders("Content-Type", "Authorization")
+                    .AllowCredentials();
             });
         });
         builder.Services.AddSwaggerGen(options =>
