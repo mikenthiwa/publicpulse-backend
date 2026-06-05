@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Web.Domain.Entities;
 using Web.Infrastructure.Persistence.Configuration;
@@ -18,10 +19,12 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfiguration(new UserConfiguration());
-        modelBuilder.ApplyConfiguration(new CategoryConfiguration());
-        modelBuilder.ApplyConfiguration(new ReportConfiguration());
-        modelBuilder.ApplyConfiguration(new ReportImageConfiguration());
-        modelBuilder.ApplyConfiguration(new ReportConfirmationConfiguration());
+        // modelBuilder.ApplyConfiguration(new UserConfiguration());
+        // modelBuilder.ApplyConfiguration(new CategoryConfiguration());
+        // modelBuilder.ApplyConfiguration(new ReportConfiguration());
+        // modelBuilder.ApplyConfiguration(new ReportImageConfiguration());
+        // modelBuilder.ApplyConfiguration(new ReportConfirmationConfiguration());
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
     }
 }

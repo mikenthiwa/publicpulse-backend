@@ -1,18 +1,14 @@
-using System.Diagnostics;
 using System.Reflection;
-using System.Text;
 using CloudinaryDotNet;
 using FluentValidation;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using Web.Common.Factory;
 using Web.Common.Mappings;
+using Web.Common.Options;
 using Web.Domain.Entities;
 using Web.Features.Auth;
 using Web.Features.Auth.Login;
@@ -62,21 +58,13 @@ public static class DependencyInjection
                 .Where(origin => !string.IsNullOrWhiteSpace(origin))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray() ?? [];
-
+            
             options.AddPolicy(CorsOptions.PolicyName, policy =>
             {
-                if (allowedOrigins.Length > 0)
-                {
-                    policy.WithOrigins(allowedOrigins);
-                }
-                else
-                {
-                    policy.AllowAnyOrigin();
-                }
-
-                policy
-                    .AllowAnyHeader()
-                    .AllowAnyMethod();
+                policy.WithOrigins(allowedOrigins)
+                    .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                    .WithHeaders("Content-Type", "Authorization")
+                    .AllowCredentials();
             });
         });
         builder.Services.AddSwaggerGen(options =>
@@ -99,6 +87,7 @@ public static class DependencyInjection
                 }
             });
         });
+        builder.Services.AddScoped<ApplicationDbContextInitialiser>();
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddHttpContextAccessor();

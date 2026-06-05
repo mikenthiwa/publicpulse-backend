@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.Extensions.Options;
+using Web.Common.Options;
 using Web.Infrastructure.Identity;
 
 namespace Web.Features.Reports.CreateReport;

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using Web.Common.Models;
 using Web.Features.Auth;
@@ -11,29 +12,32 @@ public sealed class Auth : EndpointGroupBase
 {
     public override void Map(WebApplication app)
     {
-        app.MapGroup(this)
-            .AddFluentValidationAutoValidation()
-            .MapPost(Register, "/register")
-            .MapPost(Login, "/login");
+        var group = app.MapGroup(this)
+            .AddFluentValidationAutoValidation();
+
+        group.MapPost("/register", Register)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
+        group.MapPost("/login", Login)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 
-    private static async Task<IResult> Register(
+    private static async Task<Ok<ApiResponse<AuthResponse>>> Register(
         RegisterRequest request,
         RegisterHandler handler,
         CancellationToken cancellationToken)
     {
         var response = await handler.HandleAsync(request, cancellationToken);
 
-        return Results.Ok(ApiResponse<AuthResponse>.Ok(response, "Registration completed successfully."));
+        return TypedResults.Ok(ApiResponse<AuthResponse>.Ok(response, "Registration completed successfully."));
     }
 
-    private static async Task<IResult> Login(
+    private static async Task<Ok<ApiResponse<AuthResponse>>> Login(
         LoginRequest request,
         LoginHandler handler,
         CancellationToken cancellationToken)
     {
         var response = await handler.HandleAsync(request, cancellationToken);
 
-        return Results.Ok(ApiResponse<AuthResponse>.Ok(response, "Login completed successfully."));
+        return TypedResults.Ok(ApiResponse<AuthResponse>.Ok(response, "Login completed successfully."));
     }
 }

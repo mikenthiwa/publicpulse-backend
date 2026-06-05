@@ -1,5 +1,6 @@
 using CloudinaryDotNet;
 using Microsoft.Extensions.Options;
+using Web.Common.Options;
 
 namespace Web.Features.Reports;
 
