@@ -1,18 +1,14 @@
-using System.Diagnostics;
 using System.Reflection;
-using System.Text;
 using CloudinaryDotNet;
 using FluentValidation;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
 using Web.Common.Factory;
 using Web.Common.Mappings;
+using Web.Common.Options;
 using Web.Domain.Entities;
 using Web.Features.Auth;
 using Web.Features.Auth.Login;
@@ -37,7 +33,6 @@ public static class DependencyInjection
     public static IHostApplicationBuilder AddWebServices(this IHostApplicationBuilder builder)
     {
         var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is required.");
-        
         
         var jwtOptions = builder.Configuration
             .GetSection(JwtOptions.SectionName)

@@ -1,4 +1,4 @@
-namespace Web.Features.Reports;
+namespace Web.Common.Options;
 
 public sealed class CloudinaryOptions
 {

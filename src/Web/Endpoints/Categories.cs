@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Web.Common.Models;
 using Web.Features.Categories;
 using Web.Features.Categories.ListCategories;
@@ -13,13 +14,13 @@ public class Categories : EndpointGroupBase
             .MapGet(GetCategories);
     }
 
-    private static async Task<IResult> GetCategories(
+    private static async Task<Ok<ApiResponse<IReadOnlyList<CategoryResponse>>>> GetCategories(
         ListCategoriesHandler handler,
         CancellationToken cancellationToken)
     {
         var categories = await handler.HandleAsync(cancellationToken);
 
-        return Results.Ok(ApiResponse<IReadOnlyList<CategoryResponse>>.Ok(
+        return TypedResults.Ok(ApiResponse<IReadOnlyList<CategoryResponse>>.Ok(
             categories,
             "Categories retrieved successfully."));
     }
