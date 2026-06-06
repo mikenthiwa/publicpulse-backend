@@ -18,7 +18,9 @@ public class Reports : EndpointGroupBase
     {
         var group = app.MapGroup(this);
 
-        group.MapGet("", ListReports);
+        group.MapGet("", ListReports)
+            .AddFluentValidationAutoValidation()
+            .ProducesProblem(StatusCodes.Status400BadRequest);
         group.MapGet("/{id:guid}", GetReportById)
             .WithName(nameof(GetReportById))
             .ProducesProblem(StatusCodes.Status404NotFound);
@@ -68,13 +70,14 @@ public class Reports : EndpointGroupBase
             "Upload signature created."));
     }
 
-    private static async Task<Ok<ApiResponse<IReadOnlyList<ReportListItemResponse>>>> ListReports(
+    private static async Task<Ok<ApiResponse<PaginatedList<ReportListItemResponse>>>> ListReports(
         ListReportHandler handler,
+        [AsParameters] ListReportRequest request,
         CancellationToken cancellationToken)
     {
-        var reports = await handler.HandleAsync(cancellationToken);
+        var reports = await handler.HandleAsync(request, cancellationToken);
 
-        return TypedResults.Ok(ApiResponse<IReadOnlyList<ReportListItemResponse>>.Ok(
+        return TypedResults.Ok(ApiResponse<PaginatedList<ReportListItemResponse>>.Ok(
             reports,
             "Reports retrieved successfully."));
     }

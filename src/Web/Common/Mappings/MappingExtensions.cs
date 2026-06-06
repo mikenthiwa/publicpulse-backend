@@ -2,12 +2,14 @@ using System.Diagnostics;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Web.Common.Models;
 using Web.Features.Auth;
 
 namespace Web.Common.Mappings;
 
-public static class AuthenticationExtensions
+public static class MappingExtensions
 {
     public static void AddAuth(this IServiceCollection services, IConfiguration configuration)
     {
@@ -82,5 +84,15 @@ public static class AuthenticationExtensions
                     }
                 };
         });
+    }
+
+    public static Task<PaginatedList<T>> PaginateAsync<T>(
+        this IQueryable<T> source,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+        where T : class
+    {
+        return PaginatedList<T>.CreateAsync(source.AsNoTracking(), pageNumber, pageSize, cancellationToken);
     }
 }
