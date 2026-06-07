@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
+using Web.Common.Mappings;
 using Web.Common.Models;
 using Web.Features.Auth;
 using Web.Features.Auth.Login;
@@ -21,23 +22,33 @@ public sealed class Auth : EndpointGroupBase
             .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 
-    private static async Task<Ok<ApiResponse<AuthResponse>>> Register(
+    private static async Task<Results<Ok<ApiResponse<AuthResponse>>, ProblemHttpResult>> Register(
         RegisterRequest request,
         RegisterHandler handler,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var response = await handler.HandleAsync(request, cancellationToken);
+        var result = await handler.HandleAsync(request, cancellationToken);
 
-        return TypedResults.Ok(ApiResponse<AuthResponse>.Ok(response, "Registration completed successfully."));
+        return result.IsSuccess
+            ? TypedResults.Ok(ApiResponse<AuthResponse>.Ok(
+                result.Value,
+                "Registration completed successfully."))
+            : result.ToProblemHttpResult(httpContext);
     }
 
-    private static async Task<Ok<ApiResponse<AuthResponse>>> Login(
+    private static async Task<Results<Ok<ApiResponse<AuthResponse>>, ProblemHttpResult>> Login(
         LoginRequest request,
         LoginHandler handler,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var response = await handler.HandleAsync(request, cancellationToken);
+        var result = await handler.HandleAsync(request, cancellationToken);
 
-        return TypedResults.Ok(ApiResponse<AuthResponse>.Ok(response, "Login completed successfully."));
+        return result.IsSuccess
+            ? TypedResults.Ok(ApiResponse<AuthResponse>.Ok(
+                result.Value,
+                "Login completed successfully."))
+            : result.ToProblemHttpResult(httpContext);
     }
 }

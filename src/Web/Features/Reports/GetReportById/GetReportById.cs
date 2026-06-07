@@ -1,11 +1,14 @@
 using Microsoft.EntityFrameworkCore;
+using Web.Common.Models;
 using Web.Infrastructure.Persistence;
 
 namespace Web.Features.Reports.GetReportById;
 
 public sealed class GetReportByIdHandler(ApplicationDbContext dbContext)
 {
-    public async Task<ReportResponse> HandleAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<ApplicationResult<ReportResponse>> HandleAsync(
+        Guid id,
+        CancellationToken cancellationToken)
     {
         var report = await dbContext.Reports
             .AsNoTracking()
@@ -16,9 +19,10 @@ public sealed class GetReportByIdHandler(ApplicationDbContext dbContext)
 
         if (report is null)
         {
-            throw new KeyNotFoundException("Report was not found.");
+            return ApplicationResult<ReportResponse>.NotFound("Report was not found.");
         }
 
-        return ReportResponseMapper.ToReportResponse(report, report.Confirmations.Count);
+        return ApplicationResult<ReportResponse>.Success(
+            ReportResponseMapper.ToReportResponse(report, report.Confirmations.Count));
     }
 }

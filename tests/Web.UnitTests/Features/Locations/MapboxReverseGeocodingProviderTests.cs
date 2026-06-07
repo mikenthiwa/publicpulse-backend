@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Web.Features.Locations;
+using Web.Infrastructure;
 
 namespace Web.UnitTests.Features.Locations;
 
@@ -72,6 +73,22 @@ public sealed class MapboxReverseGeocodingProviderTests
     }
 
     [Fact]
+    public async Task ReverseGeocodeAsync_WithoutAccessToken_ShouldThrowConfigurationException()
+    {
+        var provider = CreateProvider(
+            _ => new HttpResponseMessage(HttpStatusCode.OK),
+            accessToken: string.Empty);
+
+        var action = async () => await provider.ReverseGeocodeAsync(
+            -1.286389,
+            36.817223,
+            TestContext.Current.CancellationToken);
+
+        await action.Should().ThrowAsync<ProviderConfigurationException>()
+            .WithMessage("Mapbox access token is missing.");
+    }
+
+    [Fact]
     public async Task ReverseGeocodeAsync_WithTimeout_ShouldThrowProviderException()
     {
         var provider = CreateProvider(_ => throw new TaskCanceledException("timeout"));
@@ -96,13 +113,14 @@ public sealed class MapboxReverseGeocodingProviderTests
     }
 
     private static MapboxReverseGeocodingProvider CreateProvider(
-        Func<HttpRequestMessage, HttpResponseMessage> responseFactory)
+        Func<HttpRequestMessage, HttpResponseMessage> responseFactory,
+        string accessToken = "test-token")
     {
         var httpClient = new HttpClient(new StubHttpMessageHandler(responseFactory));
 
         return new MapboxReverseGeocodingProvider(
             httpClient,
-            Options.Create(new MapboxOptions { AccessToken = "test-token" }),
+            Options.Create(new MapboxOptions { AccessToken = accessToken }),
             NullLogger<MapboxReverseGeocodingProvider>.Instance);
     }
 

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Web.Common.Models;
 using Web.Domain.Entities;
 using Web.Infrastructure.Identity;
 using Web.Infrastructure.Persistence;
@@ -10,7 +11,7 @@ public class CreateReportHandler(
     IReportImageCloudinaryService imageCloudinaryService,
     ICurrentUser currentUser)
 {
-    public async Task<ReportResponse> HandleAsync(
+    public async Task<ApplicationResult<ReportResponse>> HandleAsync(
         CreateReportRequest request,
         CancellationToken cancellationToken)
     {
@@ -20,7 +21,7 @@ public class CreateReportHandler(
 
         if (!categoryExists)
         {
-            throw new KeyNotFoundException("Category was not found.");
+            return ApplicationResult<ReportResponse>.NotFound("Category was not found.");
         }
 
         var publicIds = request.Images
@@ -33,7 +34,7 @@ public class CreateReportHandler(
 
         if (hasDuplicatePublicIds)
         {
-            throw new ArgumentException("Report images must be unique.");
+            return ApplicationResult<ReportResponse>.BadRequest("Report images must be unique.");
         }
 
         var hasUsedPublicIds = await dbContext.ReportImages
@@ -41,7 +42,8 @@ public class CreateReportHandler(
 
         if (hasUsedPublicIds)
         {
-            throw new ArgumentException("One or more images have already been used.");
+            return ApplicationResult<ReportResponse>.BadRequest(
+                "One or more images have already been used.");
         }
 
         var report = new Report
@@ -83,7 +85,8 @@ public class CreateReportHandler(
             .Collection(currentReport => currentReport.Images)
             .LoadAsync(cancellationToken);
 
-        return ToReportResponse(report, confirmationCount: 0);
+        return ApplicationResult<ReportResponse>.Success(
+            ToReportResponse(report, confirmationCount: 0));
     }
 
     private static ReportResponse ToReportResponse(Report report, int confirmationCount)

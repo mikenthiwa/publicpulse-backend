@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Web.Common.Mappings;
 using Web.Common.Models;
 using Web.Features.Locations;
 using Web.Infrastructure;
@@ -16,16 +17,19 @@ public class Locations : EndpointGroupBase
             .ProducesProblem(StatusCodes.Status502BadGateway);
     }
 
-    private static async Task<Ok<ApiResponse<LocationLookupResponse>>> Reverse(
+    private static async Task<Results<Ok<ApiResponse<LocationLookupResponse>>, ProblemHttpResult>> Reverse(
         double latitude,
         double longitude,
         ReverseGeocodeHandler handler,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var location = await handler.HandleAsync(latitude, longitude, cancellationToken);
+        var result = await handler.HandleAsync(latitude, longitude, cancellationToken);
 
-        return TypedResults.Ok(ApiResponse<LocationLookupResponse>.Ok(
-            location,
-            "Location lookup completed successfully."));
+        return result.IsSuccess
+            ? TypedResults.Ok(ApiResponse<LocationLookupResponse>.Ok(
+                result.Value,
+                "Location lookup completed successfully."))
+            : result.ToProblemHttpResult(httpContext);
     }
 }

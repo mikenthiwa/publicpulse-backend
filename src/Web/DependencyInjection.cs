@@ -110,7 +110,7 @@ public static class DependencyInjection
                 || string.IsNullOrWhiteSpace(cloudinaryOptions.ApiSecret)
                 || string.IsNullOrWhiteSpace(cloudinaryOptions.UploadPreset))
             {
-                throw new ReportImageUploadException("Cloudinary configuration is missing.");
+                throw new ProviderConfigurationException("Cloudinary configuration is missing.");
             }
 
             return new Cloudinary(new Account(

@@ -91,8 +91,5 @@ public static class MappingExtensions
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default)
-        where T : class
-    {
-        return PaginatedList<T>.CreateAsync(source.AsNoTracking(), pageNumber, pageSize, cancellationToken);
-    }
+        where T : class => PaginatedList<T>.CreateAsync(source.AsNoTracking(), pageNumber, pageSize, cancellationToken);
 }

@@ -36,11 +36,11 @@ public sealed class SwaggerEndpointTests : IClassFixture<DevelopmentWebApplicati
         var paths = document.RootElement.GetProperty("paths");
 
         GetResponseCodes(paths, "/api/Locations/reverse", "get")
-            .Should().Contain(["200", "400", "502"]);
+            .Should().BeEquivalentTo(["200", "400", "502"]);
         GetResponseCodes(paths, "/api/Reports/{id}", "get")
-            .Should().Contain(["200", "404"]);
+            .Should().BeEquivalentTo(["200", "404"]);
         GetResponseCodes(paths, "/api/Reports/{id}/status", "put")
-            .Should().Contain(["200", "401", "403", "404"]);
+            .Should().BeEquivalentTo(["200", "401", "403", "404"]);
     }
 
     private static string[] GetResponseCodes(

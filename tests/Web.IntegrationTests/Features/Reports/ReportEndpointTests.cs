@@ -492,7 +492,12 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             new UpdateReportStatusRequest(ReportStatus.Resolved),
             TestContext.Current.CancellationToken);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        await response.ShouldBeProblemDetailsAsync(
+            HttpStatusCode.Forbidden,
+            "Forbidden.",
+            "Only the report creator can update status.",
+            $"/api/Reports/{createdReport.Id}/status",
+            "https://tools.ietf.org/html/rfc7231#section-6.5.3");
     }
 
     [Fact]
@@ -500,12 +505,18 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
     {
         await AuthenticateAsync("missing-status@example.com");
 
+        var reportId = Guid.NewGuid();
         var response = await _client.PutAsJsonAsync(
-            $"/api/Reports/{Guid.NewGuid()}/status",
+            $"/api/Reports/{reportId}/status",
             new UpdateReportStatusRequest(ReportStatus.Resolved),
             TestContext.Current.CancellationToken);
 
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        await response.ShouldBeProblemDetailsAsync(
+            HttpStatusCode.NotFound,
+            "Resource not found.",
+            "Report was not found.",
+            $"/api/Reports/{reportId}/status",
+            "https://tools.ietf.org/html/rfc7231#section-6.5.4");
     }
 
     private async Task AuthenticateAsync(string email)

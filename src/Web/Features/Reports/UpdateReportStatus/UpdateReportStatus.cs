@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Web.Common.Models;
 using Web.Infrastructure.Identity;
 using Web.Infrastructure.Persistence;
 
@@ -8,7 +9,7 @@ public sealed class UpdateReportStatusHandler(
     ApplicationDbContext dbContext,
     ICurrentUser currentUser)
 {
-    public async Task<ReportResponse> HandleAsync(
+    public async Task<ApplicationResult<ReportResponse>> HandleAsync(
         Guid id,
         UpdateReportStatusRequest request,
         CancellationToken cancellationToken)
@@ -22,12 +23,13 @@ public sealed class UpdateReportStatusHandler(
 
         if (report is null)
         {
-            throw new KeyNotFoundException("Report was not found.");
+            return ApplicationResult<ReportResponse>.NotFound("Report was not found.");
         }
 
         if (report.CreatedBy != userId)
         {
-            throw new UnauthorizedAccessException("Only the report creator can update status.");
+            return ApplicationResult<ReportResponse>.Forbidden(
+                "Only the report creator can update status.");
         }
 
         report.Status = request.Status;
@@ -35,6 +37,7 @@ public sealed class UpdateReportStatusHandler(
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return ReportResponseMapper.ToReportResponse(report, report.Confirmations.Count);
+        return ApplicationResult<ReportResponse>.Success(
+            ReportResponseMapper.ToReportResponse(report, report.Confirmations.Count));
     }
 }

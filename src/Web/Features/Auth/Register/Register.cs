@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Web.Common.Models;
 using Web.Domain.Entities;
 using Web.Features.Auth;
 using Web.Infrastructure.Persistence;
@@ -11,7 +12,9 @@ public sealed class RegisterHandler(
     IPasswordHasher<User> passwordHasher,
     IJwtTokenService jwtTokenService)
 {
-    public async Task<AuthResponse> HandleAsync(RegisterRequest request, CancellationToken cancellationToken)
+    public async Task<ApplicationResult<AuthResponse>> HandleAsync(
+        RegisterRequest request,
+        CancellationToken cancellationToken)
     {
         var email = NormalizeEmail(request.Email);
         var emailExists = await dbContext.Users
@@ -19,7 +22,7 @@ public sealed class RegisterHandler(
 
         if (emailExists)
         {
-            throw new InvalidOperationException("Email is already registered.");
+            return ApplicationResult<AuthResponse>.BadRequest("Email is already registered.");
         }
 
         var user = new User
@@ -33,7 +36,7 @@ public sealed class RegisterHandler(
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return jwtTokenService.CreateToken(user);
+        return ApplicationResult<AuthResponse>.Success(jwtTokenService.CreateToken(user));
     }
 
     private static string NormalizeEmail(string email)

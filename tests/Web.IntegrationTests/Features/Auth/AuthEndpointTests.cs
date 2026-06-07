@@ -50,7 +50,12 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
             TestContext.Current.CancellationToken);
 
         firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        secondResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await secondResponse.ShouldBeProblemDetailsAsync(
+            HttpStatusCode.BadRequest,
+            "Bad request.",
+            "Email is already registered.",
+            "/api/Auth/register",
+            "https://tools.ietf.org/html/rfc7231#section-6.5.1");
     }
 
     public static TheoryData<RegisterRequest> InvalidRegisterRequests => new()
@@ -69,7 +74,14 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
             request,
             TestContext.Current.CancellationToken);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problemDetails = await response.ShouldBeProblemDetailsAsync(
+            HttpStatusCode.BadRequest,
+            "One or more validation errors occurred.",
+            "One or more validation failures have occurred.",
+            "/api/Auth/register",
+            "https://tools.ietf.org/html/rfc7231#section-6.5.1");
+
+        problemDetails.Errors.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
@@ -109,7 +121,12 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
             new LoginRequest("invalid-login@example.com", "WrongPassword123!"),
             TestContext.Current.CancellationToken);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await response.ShouldBeProblemDetailsAsync(
+            HttpStatusCode.BadRequest,
+            "Bad request.",
+            "Invalid email or password.",
+            "/api/Auth/login",
+            "https://tools.ietf.org/html/rfc7231#section-6.5.1");
     }
 
     public static TheoryData<LoginRequest> InvalidLoginRequests => new()
@@ -128,6 +145,13 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
             request,
             TestContext.Current.CancellationToken);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problemDetails = await response.ShouldBeProblemDetailsAsync(
+            HttpStatusCode.BadRequest,
+            "One or more validation errors occurred.",
+            "One or more validation failures have occurred.",
+            "/api/Auth/login",
+            "https://tools.ietf.org/html/rfc7231#section-6.5.1");
+
+        problemDetails.Errors.Should().NotBeNullOrEmpty();
     }
 }

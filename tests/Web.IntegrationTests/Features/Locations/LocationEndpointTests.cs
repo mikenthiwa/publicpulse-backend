@@ -19,13 +19,14 @@ public sealed class LocationEndpointTests : IClassFixture<TestWebApplicationFact
     }
 
     [Theory]
-    [InlineData(-91, 36.817223)]
-    [InlineData(91, 36.817223)]
-    [InlineData(-1.286389, -181)]
-    [InlineData(-1.286389, 181)]
+    [InlineData(-91, 36.817223, "Latitude must be between -90 and 90.")]
+    [InlineData(91, 36.817223, "Latitude must be between -90 and 90.")]
+    [InlineData(-1.286389, -181, "Longitude must be between -180 and 180.")]
+    [InlineData(-1.286389, 181, "Longitude must be between -180 and 180.")]
     public async Task Reverse_WithOutOfRangeCoordinates_ShouldReturnBadRequest(
         double latitude,
-        double longitude)
+        double longitude,
+        string detail)
     {
         using var client = _factory.CreateClient();
 
@@ -33,7 +34,12 @@ public sealed class LocationEndpointTests : IClassFixture<TestWebApplicationFact
             $"/api/Locations/reverse?latitude={latitude}&longitude={longitude}",
             TestContext.Current.CancellationToken);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await response.ShouldBeProblemDetailsAsync(
+            HttpStatusCode.BadRequest,
+            "Bad request.",
+            detail,
+            "/api/Locations/reverse",
+            "https://tools.ietf.org/html/rfc7231#section-6.5.1");
     }
 
     [Fact]
@@ -77,8 +83,12 @@ public sealed class LocationEndpointTests : IClassFixture<TestWebApplicationFact
             "/api/Locations/reverse?latitude=-1.286389&longitude=36.817223",
             TestContext.Current.CancellationToken);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadGateway);
-        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+        await response.ShouldBeProblemDetailsAsync(
+            HttpStatusCode.BadGateway,
+            "Upstream provider failed.",
+            "Reverse geocoding failed.",
+            "/api/Locations/reverse",
+            "https://tools.ietf.org/html/rfc7231#section-6.6.3");
     }
 
     private sealed class FailingReverseGeocodingProvider : IReverseGeocodingProvider

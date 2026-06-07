@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Web.Common.Models;
 using Web.Features.Auth;
 using Web.Features.Categories;
 using Web.Features.Reports;
@@ -13,7 +14,7 @@ namespace Web.UnitTests.Features.Reports;
 public sealed class UpdateReportStatusHandlerTests
 {
     [Fact]
-    public async Task HandleAsync_WhenUserIsNotCreator_ShouldThrowUnauthorizedAccessException()
+    public async Task HandleAsync_WhenUserIsNotCreator_ShouldReturnForbidden()
     {
         await using var dbContext = CreateDbContext();
         var creator = CreateUser("creator@example.com");
@@ -33,12 +34,15 @@ public sealed class UpdateReportStatusHandlerTests
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
         var handler = new UpdateReportStatusHandler(dbContext, new TestCurrentUser(otherUser.Id));
 
-        var action = async () => await handler.HandleAsync(
+        var result = await handler.HandleAsync(
             report.Id,
             new UpdateReportStatusRequest(ReportStatus.InProgress),
             CancellationToken.None);
 
-        await action.Should().ThrowAsync<UnauthorizedAccessException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(new ApplicationError(
+            ApplicationErrorKind.Forbidden,
+            "Only the report creator can update status."));
     }
 
     [Fact]
@@ -62,12 +66,13 @@ public sealed class UpdateReportStatusHandlerTests
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
         var handler = new UpdateReportStatusHandler(dbContext, new TestCurrentUser(creator.Id));
 
-        var updatedReport = await handler.HandleAsync(
+        var result = await handler.HandleAsync(
             report.Id,
             new UpdateReportStatusRequest(ReportStatus.InProgress),
             CancellationToken.None);
 
-        updatedReport.Status.Should().Be(ReportStatus.InProgress);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Status.Should().Be(ReportStatus.InProgress);
     }
 
     private static ApplicationDbContext CreateDbContext()
