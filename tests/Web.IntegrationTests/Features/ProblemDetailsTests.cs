@@ -16,9 +16,18 @@ public sealed class ProblemDetailsTests : IClassFixture<ExceptionTestWebApplicat
     [Fact]
     public async Task UnhandledException_ShouldReturnProblemDetails()
     {
-        var response = await _client.GetAsync(
-            "/test/unhandled-exception",
-            TestContext.Current.CancellationToken);
+        await AssertUnexpectedProblemDetailsAsync("/test/unhandled-exception");
+    }
+
+    [Fact]
+    public async Task GenericInvalidOperationException_ShouldReturnInternalServerError()
+    {
+        await AssertUnexpectedProblemDetailsAsync("/test/invalid-operation-exception");
+    }
+
+    private async Task AssertUnexpectedProblemDetailsAsync(string path)
+    {
+        var response = await _client.GetAsync(path, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
@@ -30,7 +39,7 @@ public sealed class ProblemDetailsTests : IClassFixture<ExceptionTestWebApplicat
         problemDetails!.Status.Should().Be((int)HttpStatusCode.InternalServerError);
         problemDetails.Title.Should().Be("An unexpected error occurred.");
         problemDetails.Detail.Should().Be("The server encountered an unexpected error.");
-        problemDetails.Instance.Should().Be("/test/unhandled-exception");
+        problemDetails.Instance.Should().Be(path);
         problemDetails.TraceId.Should().NotBeNullOrWhiteSpace();
     }
 

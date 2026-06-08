@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Web.Common.Models;
 using Web.Domain.Entities;
 using Web.Features.Auth;
 using Web.Infrastructure.Persistence;
@@ -11,7 +12,9 @@ public sealed class LoginHandler(
     IPasswordHasher<User> passwordHasher,
     IJwtTokenService jwtTokenService)
 {
-    public async Task<AuthResponse> HandleAsync(LoginRequest request, CancellationToken cancellationToken)
+    public async Task<ApplicationResult<AuthResponse>> HandleAsync(
+        LoginRequest request,
+        CancellationToken cancellationToken)
     {
         var email = NormalizeEmail(request.Email);
         var user = await dbContext.Users
@@ -19,7 +22,7 @@ public sealed class LoginHandler(
 
         if (user is null)
         {
-            throw new InvalidOperationException("Invalid email or password.");
+            return ApplicationResult<AuthResponse>.BadRequest("Invalid email or password.");
         }
 
         var passwordVerification = passwordHasher.VerifyHashedPassword(
@@ -29,10 +32,10 @@ public sealed class LoginHandler(
 
         if (passwordVerification == PasswordVerificationResult.Failed)
         {
-            throw new InvalidOperationException("Invalid email or password.");
+            return ApplicationResult<AuthResponse>.BadRequest("Invalid email or password.");
         }
 
-        return jwtTokenService.CreateToken(user);
+        return ApplicationResult<AuthResponse>.Success(jwtTokenService.CreateToken(user));
     }
 
     private static string NormalizeEmail(string email)

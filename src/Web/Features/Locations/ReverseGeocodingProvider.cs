@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
+using Web.Infrastructure;
 
 namespace Web.Features.Locations;
 
@@ -31,7 +32,7 @@ public sealed class MapboxReverseGeocodingProvider(
 
         if (string.IsNullOrWhiteSpace(accessToken))
         {
-            throw new ReverseGeocodingProviderException("Mapbox access token is missing.");
+            throw new ProviderConfigurationException("Mapbox access token is missing.");
         }
 
         var uri = new UriBuilder(new Uri(new Uri(options.Value.BaseUrl), "search/geocode/v6/reverse"))

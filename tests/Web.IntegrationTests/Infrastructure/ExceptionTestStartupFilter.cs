@@ -15,6 +15,11 @@ public sealed class ExceptionTestStartupFilter : IStartupFilter
             {
                 testApp.Run(_ => throw new Exception("Test exception."));
             });
+
+            app.Map("/test/invalid-operation-exception", testApp =>
+            {
+                testApp.Run(_ => throw new InvalidOperationException("Programming failure."));
+            });
         };
     }
 }

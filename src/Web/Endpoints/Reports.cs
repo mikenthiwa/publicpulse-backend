@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
+using Web.Common.Mappings;
 using Web.Common.Models;
 using Web.Features.Reports;
 using Web.Features.Reports.ConfirmReport;
@@ -18,7 +19,9 @@ public class Reports : EndpointGroupBase
     {
         var group = app.MapGroup(this);
 
-        group.MapGet("", ListReports);
+        group.MapGet("", ListReports)
+            .AddFluentValidationAutoValidation()
+            .ProducesProblem(StatusCodes.Status400BadRequest);
         group.MapGet("/{id:guid}", GetReportById)
             .WithName(nameof(GetReportById))
             .ProducesProblem(StatusCodes.Status404NotFound);
@@ -46,16 +49,21 @@ public class Reports : EndpointGroupBase
             .RequireAuthorization();
     }
 
-    private static async Task<Created<ApiResponse<ReportResponse>>> CreateReport(
+    private static async Task<Results<Created<ApiResponse<ReportResponse>>, ProblemHttpResult>> CreateReport(
         CreateReportRequest request,
         CreateReportHandler handler,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var report = await handler.HandleAsync(request, cancellationToken);
+        var result = await handler.HandleAsync(request, cancellationToken);
 
-        return TypedResults.Created(
-            $"/api/Reports/{report.Id}",
-            ApiResponse<ReportResponse>.Ok(report, "Report created successfully."));
+        return result.IsSuccess
+            ? TypedResults.Created(
+                $"/api/Reports/{result.Value.Id}",
+                ApiResponse<ReportResponse>.Ok(
+                    result.Value,
+                    "Report created successfully."))
+            : result.ToProblemHttpResult(httpContext);
     }
 
     private static Ok<ApiResponse<ReportImageUploadSignatureResponse>> CreateImageUploadSignature(
@@ -68,49 +76,61 @@ public class Reports : EndpointGroupBase
             "Upload signature created."));
     }
 
-    private static async Task<Ok<ApiResponse<IReadOnlyList<ReportListItemResponse>>>> ListReports(
+    private static async Task<Ok<ApiResponse<PaginatedList<ReportListItemResponse>>>> ListReports(
         ListReportHandler handler,
+        [AsParameters] ListReportRequest request,
         CancellationToken cancellationToken)
     {
-        var reports = await handler.HandleAsync(cancellationToken);
+        var reports = await handler.HandleAsync(request, cancellationToken);
 
-        return TypedResults.Ok(ApiResponse<IReadOnlyList<ReportListItemResponse>>.Ok(
+        return TypedResults.Ok(ApiResponse<PaginatedList<ReportListItemResponse>>.Ok(
             reports,
             "Reports retrieved successfully."));
     }
 
-    private static async Task<Ok<ApiResponse<ReportResponse>>> GetReportById(
+    private static async Task<Results<Ok<ApiResponse<ReportResponse>>, ProblemHttpResult>> GetReportById(
         Guid id,
         GetReportByIdHandler handler,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var report = await handler.HandleAsync(id, cancellationToken);
+        var result = await handler.HandleAsync(id, cancellationToken);
 
-        return TypedResults.Ok(ApiResponse<ReportResponse>.Ok(report, "Report retrieved successfully."));
+        return result.IsSuccess
+            ? TypedResults.Ok(ApiResponse<ReportResponse>.Ok(
+                result.Value,
+                "Report retrieved successfully."))
+            : result.ToProblemHttpResult(httpContext);
     }
 
-    private static async Task<Ok<ApiResponse<ConfirmReportResponse>>> ConfirmReport(
+    private static async Task<Results<Ok<ApiResponse<ConfirmReportResponse>>, ProblemHttpResult>> ConfirmReport(
         Guid id,
         ConfirmReportHandler handler,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var confirmation = await handler.HandleAsync(id, cancellationToken);
+        var result = await handler.HandleAsync(id, cancellationToken);
 
-        return TypedResults.Ok(ApiResponse<ConfirmReportResponse>.Ok(
-            confirmation,
-            "Report confirmed successfully."));
+        return result.IsSuccess
+            ? TypedResults.Ok(ApiResponse<ConfirmReportResponse>.Ok(
+                result.Value,
+                "Report confirmed successfully."))
+            : result.ToProblemHttpResult(httpContext);
     }
 
-    private static async Task<Ok<ApiResponse<ReportResponse>>> UpdateReportStatus(
+    private static async Task<Results<Ok<ApiResponse<ReportResponse>>, ProblemHttpResult>> UpdateReportStatus(
         Guid id,
         UpdateReportStatusRequest request,
         UpdateReportStatusHandler handler,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var report = await handler.HandleAsync(id, request, cancellationToken);
+        var result = await handler.HandleAsync(id, request, cancellationToken);
 
-        return TypedResults.Ok(ApiResponse<ReportResponse>.Ok(
-            report,
-            "Report status updated successfully."));
+        return result.IsSuccess
+            ? TypedResults.Ok(ApiResponse<ReportResponse>.Ok(
+                result.Value,
+                "Report status updated successfully."))
+            : result.ToProblemHttpResult(httpContext);
     }
 }
