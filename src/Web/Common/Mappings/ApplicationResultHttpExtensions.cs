@@ -16,7 +16,7 @@ public static class ApplicationResultHttpExtensions
             throw new InvalidOperationException("A successful result cannot be mapped to a problem response.");
         }
 
-        var (status, title, type) = result.Error.Kind switch
+        (int status, string title, string type) = result.Error.Kind switch
         {
             ApplicationErrorKind.BadRequest => (
                 StatusCodes.Status400BadRequest,

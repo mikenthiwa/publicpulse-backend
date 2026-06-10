@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using SharpGrip.FluentValidation.AutoValidation.Endpoints.Extensions;
+using Web.Common.Extensions;
 using Web.Common.Factory;
-using Web.Common.Mappings;
 using Web.Common.Options;
 using Web.Domain.Entities;
 using Web.Features.Auth;
@@ -34,19 +34,6 @@ public static class DependencyInjection
     {
         var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is required.");
         
-        var jwtOptions = builder.Configuration
-            .GetSection(JwtOptions.SectionName)
-            .Get<JwtOptions>();
-
-        if (jwtOptions is null
-            || string.IsNullOrWhiteSpace(jwtOptions.Issuer)
-            || string.IsNullOrWhiteSpace(jwtOptions.Audience)
-            || string.IsNullOrWhiteSpace(jwtOptions.SigningKey)
-            || jwtOptions.ExpiryMinutes <= 0)
-        {
-            throw new InvalidOperationException("JWT configuration is required.");
-        }
-
         builder.Services.AddOpenApi();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddCors(options =>

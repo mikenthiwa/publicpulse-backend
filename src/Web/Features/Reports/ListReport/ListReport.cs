@@ -1,6 +1,5 @@
 using FluentValidation;
-using Microsoft.EntityFrameworkCore;
-using Web.Common.Mappings;
+using Web.Common.Extensions;
 using Web.Common.Models;
 using Web.Infrastructure.Persistence;
 
@@ -17,7 +16,6 @@ public sealed record ListReportRequest
 }
 
 
-
 public sealed class ListReportHandler(ApplicationDbContext dbContext)
 {
     public async Task<PaginatedList<ReportListItemResponse>> HandleAsync(
@@ -28,7 +26,6 @@ public sealed class ListReportHandler(ApplicationDbContext dbContext)
         var pageSize = request.PageSize ?? ListReportRequest.DefaultPageSize;
 
         return await dbContext.Reports
-            .AsNoTracking()
             .OrderByDescending(report => report.Created)
             .ThenByDescending(report => report.Id)
             .Select(report => new ReportListItemResponse(
