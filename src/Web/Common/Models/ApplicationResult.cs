@@ -16,16 +16,12 @@ public sealed class ApplicationResult<T>
 
     private ApplicationResult(T value)
     {
-        ArgumentNullException.ThrowIfNull(value);
-
         IsSuccess = true;
         _value = value;
     }
 
     private ApplicationResult(ApplicationError error)
     {
-        ArgumentNullException.ThrowIfNull(error);
-
         IsSuccess = false;
         _error = error;
     }
@@ -42,6 +38,7 @@ public sealed class ApplicationResult<T>
 
     public static ApplicationResult<T> Success(T value)
     {
+        ArgumentNullException.ThrowIfNull(value);
         return new ApplicationResult<T>(value);
     }
 
