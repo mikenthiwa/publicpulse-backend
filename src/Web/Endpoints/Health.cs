@@ -12,8 +12,27 @@ public class Health : EndpointGroupBase
             .MapGet(GetHealth);
 
         app.MapGet("/health", GetHealth)
-        .WithName("HealthCheck")
-        .WithTags("Health");
+            .WithName("HealthCheck")
+            .WithTags("Health")
+            .Produces<ApiResponse<HealthStatus>>()
+            .Produces<ApiResponse<HealthStatus>>(StatusCodes.Status503ServiceUnavailable);
+
+        app.MapGet("/health/live", GetLiveness)
+            .WithName("LivenessCheck")
+            .WithTags("Health")
+            .Produces<ApiResponse<LivenessStatus>>();
+    }
+
+    private static IResult GetLiveness()
+    {
+        var data = new LivenessStatus(
+            Status: "Healthy",
+            CheckedAtUtc: DateTimeOffset.UtcNow);
+
+        return Results.Ok(new ApiResponse<LivenessStatus>(
+            Success: true,
+            Message: "PublicPulse API liveness check completed.",
+            Data: data));
     }
 
     private static async Task<IResult> GetHealth(
@@ -48,4 +67,8 @@ public sealed record HealthStatus(
     string Status,
     bool DatabaseConfigured,
     bool DatabaseConnected,
+    DateTimeOffset CheckedAtUtc);
+
+public sealed record LivenessStatus(
+    string Status,
     DateTimeOffset CheckedAtUtc);

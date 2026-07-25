@@ -7,19 +7,18 @@ namespace Web.Infrastructure.Persistence;
 
 public static class InitialiserExtensions
 {
-    public static async Task InitialiseAsync(this WebApplication application)
+    public static async Task SeedDemoDataAsync(this WebApplication application)
     {
-        var scope = application.Services.CreateScope();
-        var initialiser = scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitialiser>();
-        await initialiser.InitialiseAsync();
-        await initialiser.SeedAsync();
+        await using var scope = application.Services.CreateAsyncScope();
+        var seeder = scope.ServiceProvider.GetRequiredService<ApplicationDbContextSeeder>();
+        await seeder.SeedAsync();
     }
 }
 
-public class ApplicationDbContextInitialiser(
+public sealed class ApplicationDbContextSeeder(
     ApplicationDbContext dbContext,
     IPasswordHasher<User> passwordHasher,
-    ILogger<ApplicationDbContextInitialiser> logger)
+    ILogger<ApplicationDbContextSeeder> logger)
 {
     private static readonly Guid DemoUserId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     private static readonly Guid AdminUserId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
@@ -28,21 +27,6 @@ public class ApplicationDbContextInitialiser(
     private static readonly Guid OgingaOdingaReportId = Guid.Parse("c3333333-3333-3333-3333-333333333333");
     private static readonly Guid NyaliBridgeReportId = Guid.Parse("c4444444-4444-4444-4444-444444444444");
     private const string DemoPassword = "Password123!";
-
-    public async Task InitialiseAsync()
-    {
-        try
-        {
-            // See https://jasontaylor.dev/ef-core-database-initialisation-strategies
-            await dbContext.Database.EnsureDeletedAsync();
-            await dbContext.Database.EnsureCreatedAsync();
-        }
-        catch (Exception e)
-        {
-            logger.LogError(e, "An error occurred while initialising the database.");
-            throw;
-        }
-    }
 
     public async Task SeedAsync()
     {
@@ -56,7 +40,7 @@ public class ApplicationDbContextInitialiser(
             throw;
         }
     }
-    
+
     private async Task TrySeedAsync()
     {
         if (!await dbContext.Users.AnyAsync())

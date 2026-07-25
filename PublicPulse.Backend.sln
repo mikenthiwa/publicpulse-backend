@@ -15,13 +15,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web.IntegrationTests", "tes
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{23699DD5-8D05-45F6-A81B-305C7BC28F13}"
 	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
 		.editorconfig = .editorconfig
 		.env.example = .env.example
+		.env = .env
 		.gitignore = .gitignore
 		AGENTS.md = AGENTS.md
 		CAPSTONE.md = CAPSTONE.md
+		compose.dev.yaml = compose.dev.yaml
+		compose.yaml = compose.yaml
 		Directory.Build.props = Directory.Build.props
 		Directory.Packages.props = Directory.Packages.props
+		Dockerfile = Dockerfile
 		README.md = README.md
 	EndProjectSection
 EndProject

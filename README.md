@@ -8,6 +8,68 @@
 - PostgreSQL configuration through user secrets or environment variables
 - Swagger/OpenAPI
 
+## Docker Compose
+
+Copy the example environment file and replace the placeholder credentials:
+
+```bash
+cp .env.example .env
+```
+
+Start the production-like stack:
+
+```bash
+docker compose up --build --wait
+```
+
+The stack contains three services:
+
+- `db` runs PostgreSQL with data stored in the `postgres-data` named volume.
+- `migrate` applies the checked-in EF Core migrations and exits successfully.
+- `api` starts only after the database is healthy and migrations have completed.
+
+The API is available at `http://localhost:5000`. Its health endpoints are:
+
+```bash
+curl http://localhost:5000/health/live
+curl http://localhost:5000/health
+```
+
+`/health/live` checks that the API process is running. `/health` also checks
+PostgreSQL connectivity and returns `503 Service Unavailable` when the database
+is unavailable.
+
+For local development, enable Swagger, demo data, and host access to PostgreSQL
+with the development override:
+
+```bash
+docker compose -f compose.yaml -f compose.dev.yaml up --build --wait
+```
+
+Swagger UI is then available at `http://localhost:5000/swagger`. Demo data is
+idempotently seeded after migrations when `SEED_DATA_ENABLED=true`. Normal API
+startup never deletes or creates the schema.
+
+Useful lifecycle commands:
+
+```bash
+docker compose logs -f api
+docker compose down
+docker compose down -v
+```
+
+`docker compose down` preserves PostgreSQL data. `docker compose down -v`
+permanently removes the database volume and should only be used when a full
+local reset is intended.
+
+The Compose file is suitable for local and single-host deployments. For
+production, inject the database connection string, JWT signing key, Cloudinary
+credentials, and Mapbox token from the deployment platform's secret store.
+Do not use committed values, Docker build arguments, or a checked-in `.env`
+file for secrets. Run the `migrator` image once per release before starting or
+scaling API replicas, terminate TLS at a reverse proxy or load balancer, avoid
+publishing PostgreSQL, and deploy immutable image tags.
+
 ## Getting Started
 
 Restore dependencies:
@@ -97,6 +159,10 @@ Apply migrations:
 dotnet ef database update --project src/Web/Web.csproj --startup-project src/Web/Web.csproj
 ```
 
+Schema migrations are never applied by normal API startup. In Compose, the
+one-shot `migrate` service owns this responsibility. Outside Compose, apply
+migrations with the command above before starting the API.
+
 The `/health` endpoint checks PostgreSQL connectivity and returns `503 Service Unavailable` when the database cannot be reached.
 
 ## Authentication
@@ -161,6 +227,8 @@ Copy `.env.example` into your local environment manager or export the values in 
 | `ASPNETCORE_ENVIRONMENT` | Runtime environment, usually `Development` locally |
 | `ASPNETCORE_URLS` | Local URL binding for the API |
 | `ConnectionStrings__DefaultConnection` | PostgreSQL connection string |
+| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Compose PostgreSQL database and credentials |
+| `API_PORT`, `POSTGRES_PORT` | Optional host ports used by Compose |
 | `Jwt__Issuer` | JWT token issuer |
 | `Jwt__Audience` | JWT token audience |
 | `Jwt__SigningKey` | JWT signing key |
@@ -172,6 +240,12 @@ Copy `.env.example` into your local environment manager or export the values in 
 | `Cloudinary__UploadPreset` | Cloudinary upload preset that enforces allowed image formats and file size |
 | `Cloudinary__MaxImagesPerReport` | Maximum number of images per report |
 | `Mapbox__AccessToken` or `MAPBOX_ACCESS_TOKEN` | Server-side Mapbox token for reverse geocoding; never expose this to clients |
+| `SeedData__Enabled` | Enables idempotent demo data only in Development; defaults to `false` |
+
+Compose maps the uppercase variables in `.env.example` (for example
+`JWT_SIGNING_KEY`) to their ASP.NET configuration names. The duplicate
+double-underscore variables at the bottom of the example are provided for
+direct `dotnet run` workflows.
 
 Store Cloudinary account credentials with .NET user secrets for local development:
 

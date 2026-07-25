@@ -13,7 +13,11 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
-    await app.InitialiseAsync();
+
+    if (app.Configuration.GetValue<bool>("SeedData:Enabled"))
+    {
+        await app.SeedDemoDataAsync();
+    }
 }
 
 app.UseExceptionHandler();

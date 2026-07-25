@@ -33,7 +33,7 @@ public static class DependencyInjection
     public static IHostApplicationBuilder AddWebServices(this IHostApplicationBuilder builder)
     {
         var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is required.");
-        
+
         builder.Services.AddOpenApi();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddCors(options =>
@@ -45,7 +45,7 @@ public static class DependencyInjection
                 .Where(origin => !string.IsNullOrWhiteSpace(origin))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray() ?? [];
-            
+
             options.AddPolicy(CorsOptions.PolicyName, policy =>
             {
                 policy.WithOrigins(allowedOrigins)
@@ -74,7 +74,7 @@ public static class DependencyInjection
                 }
             });
         });
-        builder.Services.AddScoped<ApplicationDbContextInitialiser>();
+        builder.Services.AddScoped<ApplicationDbContextSeeder>();
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddHttpContextAccessor();
@@ -132,7 +132,7 @@ public static class DependencyInjection
         {
             configuration.OverrideDefaultResultFactoryWith<CustomResultFactory>();
         });
-        
+
         return builder;
     }
 }
