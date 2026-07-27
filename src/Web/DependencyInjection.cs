@@ -130,7 +130,7 @@ public static class DependencyInjection
         builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         builder.Services.AddFluentValidationAutoValidation(configuration =>
         {
-            configuration.OverrideDefaultResultFactoryWith<CustomResultFactory>();
+            configuration.OverrideDefaultResultFactoryWith<ValidationProblemResultFactory>();
         });
 
         return builder;

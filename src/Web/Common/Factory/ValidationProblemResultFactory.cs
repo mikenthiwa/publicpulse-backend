@@ -4,7 +4,7 @@ using ValidationResult = FluentValidation.Results.ValidationResult;
 
 namespace Web.Common.Factory;
 
-public class CustomResultFactory : IFluentValidationAutoValidationResultFactory
+public class ValidationProblemResultFactory : IFluentValidationAutoValidationResultFactory
 {
     public IResult CreateResult(EndpointFilterInvocationContext context, ValidationResult validationResult)
     {
