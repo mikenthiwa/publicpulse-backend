@@ -1,0 +1,16 @@
+.git
+.gitignore
+.idea
+.vs
+.vscode
+**/bin
+**/obj
+**/TestResults
+**/*.user
+**/*.suo
+.env
+.env.*
+!.env.example
+*.md
+!README.md
+PublicPulse.Backend.sln.DotSettings.user
