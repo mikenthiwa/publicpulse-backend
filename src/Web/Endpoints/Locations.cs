@@ -12,7 +12,6 @@ public class Locations : EndpointGroupBase
     {
         app.MapGroup(this)
             .MapGet("/reverse", Reverse)
-            .WithName(nameof(Reverse))
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status502BadGateway);
     }

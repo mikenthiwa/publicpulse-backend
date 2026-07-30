@@ -17,7 +17,7 @@ public sealed class CategoryEndpointTests : IClassFixture<TestWebApplicationFact
     [Fact]
     public async Task GetCategories_ShouldReturnSeededCategories()
     {
-        var response = await _client.GetAsync("/api/Categories", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync("/api/v1/Categories", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -28,5 +28,14 @@ public sealed class CategoryEndpointTests : IClassFixture<TestWebApplicationFact
         categories.Select(category => category.Name)
             .Should()
             .Contain(["Roads", "Drainage", "Street Lights", "Bridges"]);
+    }
+
+    [Fact]
+    public async Task GetCategories_V1Path_ShouldReportTheSupportedVersion()
+    {
+        var versionedResponse = await _client.GetAsync("/api/v1/Categories", TestContext.Current.CancellationToken);
+
+        versionedResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        versionedResponse.Headers.GetValues("api-supported-versions").Should().Contain("1.0");
     }
 }

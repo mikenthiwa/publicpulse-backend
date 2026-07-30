@@ -29,7 +29,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         await AuthenticateAsync("signature@example.com");
 
         var response = await _client.PostAsync(
-            "/api/Reports/images/upload-signature",
+            "/api/v1/Reports/images/upload-signature",
             content: null,
             TestContext.Current.CancellationToken);
 
@@ -51,24 +51,24 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
     public async Task CreateImageUploadSignature_WithoutToken_ShouldReturnUnauthorized()
     {
         var response = await _client.PostAsync(
-            "/api/Reports/images/upload-signature",
+            "/api/v1/Reports/images/upload-signature",
             content: null,
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        await AssertUnauthorizedProblemDetailsAsync(response, "/api/Reports/images/upload-signature");
+        await AssertUnauthorizedProblemDetailsAsync(response, "/api/v1/Reports/images/upload-signature");
     }
 
     [Fact]
     public async Task CreateReport_WithoutToken_ShouldReturnUnauthorized()
     {
         var response = await _client.PostAsJsonAsync(
-            "/api/Reports",
+            "/api/v1/Reports",
             CreateReportRequest(),
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        await AssertUnauthorizedProblemDetailsAsync(response, "/api/Reports");
+        await AssertUnauthorizedProblemDetailsAsync(response, "/api/v1/Reports");
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         await AuthenticateAsync("report-creator@example.com");
 
         var response = await _client.PostAsJsonAsync(
-            "/api/Reports",
+            "/api/v1/Reports",
             CreateReportRequest(imageCount: 2),
             TestContext.Current.CancellationToken);
 
@@ -116,7 +116,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             locationSource: "mapbox");
 
         var createResponse = await _client.PostAsJsonAsync(
-            "/api/Reports",
+            "/api/v1/Reports",
             request,
             TestContext.Current.CancellationToken);
 
@@ -131,7 +131,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         createdReport.LocationSource.Should().Be("mapbox");
 
         _client.DefaultRequestHeaders.Authorization = null;
-        var listResponse = await _client.GetAsync("/api/Reports", TestContext.Current.CancellationToken);
+        var listResponse = await _client.GetAsync("/api/v1/Reports", TestContext.Current.CancellationToken);
         var reports = await ApiTestClient.ReadDataAsync<PaginatedList<ReportListItemResponse>>(
             listResponse,
             TestContext.Current.CancellationToken);
@@ -143,7 +143,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         listedReport.LocationSource.Should().Be("mapbox");
 
         var detailResponse = await _client.GetAsync(
-            $"/api/Reports/{createdReport.Id}",
+            $"/api/v1/Reports/{createdReport.Id}",
             TestContext.Current.CancellationToken);
         var detailReport = await ApiTestClient.ReadDataAsync<ReportResponse>(
             detailResponse,
@@ -162,7 +162,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         var publicId = $"{_currentUserFolder}/road image #1";
 
         var response = await _client.PostAsJsonAsync(
-            "/api/Reports",
+            "/api/v1/Reports",
             CreateReportRequest(images: [new CreateReportImageRequest(publicId, "123", "valid-signature")]),
             TestContext.Current.CancellationToken);
 
@@ -188,7 +188,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         };
 
         var response = await _client.PostAsJsonAsync(
-            "/api/Reports",
+            "/api/v1/Reports",
             CreateReportRequest(images: images),
             TestContext.Current.CancellationToken);
 
@@ -201,14 +201,14 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         await AuthenticateAsync("reused-image@example.com");
         var publicId = $"{_currentUserFolder}/road-reused";
         var firstResponse = await _client.PostAsJsonAsync(
-            "/api/Reports",
+            "/api/v1/Reports",
             CreateReportRequest(images: [new CreateReportImageRequest(publicId, "123", "valid-signature")]),
             TestContext.Current.CancellationToken);
 
         firstResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var secondResponse = await _client.PostAsJsonAsync(
-            "/api/Reports",
+            "/api/v1/Reports",
             CreateReportRequest(images: [new CreateReportImageRequest(publicId, "123", "valid-signature")]),
             TestContext.Current.CancellationToken);
 
@@ -221,7 +221,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         await AuthenticateAsync("invalid-signature@example.com");
 
         var response = await _client.PostAsJsonAsync(
-            "/api/Reports",
+            "/api/v1/Reports",
             CreateReportRequest(signature: "invalid-signature"),
             TestContext.Current.CancellationToken);
 
@@ -234,7 +234,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         await AuthenticateAsync("wrong-folder@example.com");
 
         var response = await _client.PostAsJsonAsync(
-            "/api/Reports",
+            "/api/v1/Reports",
             CreateReportRequest(publicIdPrefix: "public-pulse/reports/other-user"),
             TestContext.Current.CancellationToken);
 
@@ -247,7 +247,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         await AuthenticateAsync("too-many-images@example.com");
 
         var response = await _client.PostAsJsonAsync(
-            "/api/Reports",
+            "/api/v1/Reports",
             CreateReportRequest(imageCount: 6),
             TestContext.Current.CancellationToken);
 
@@ -260,7 +260,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         await AuthenticateAsync("no-images@example.com");
 
         var response = await _client.PostAsJsonAsync(
-            "/api/Reports",
+            "/api/v1/Reports",
             CreateReportRequest(images: []),
             TestContext.Current.CancellationToken);
 
@@ -280,7 +280,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         };
 
         var response = await _client.PostAsJsonAsync(
-            "/api/Reports",
+            "/api/v1/Reports",
             request,
             TestContext.Current.CancellationToken);
 
@@ -294,7 +294,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         var createdReport = await CreateReportAsync();
         _client.DefaultRequestHeaders.Authorization = null;
 
-        var response = await _client.GetAsync("/api/Reports", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync("/api/v1/Reports", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var responseJson = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -314,7 +314,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
     public async Task ListReports_WithPagingParameters_ShouldReturnRequestedPageMetadata()
     {
         var response = await _client.GetAsync(
-            "/api/Reports?pageNumber=2&pageSize=1",
+            "/api/v1/Reports?pageNumber=2&pageSize=1",
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -347,7 +347,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         }
 
         var response = await _client.GetAsync(
-            "/api/Reports?pageNumber=1&pageSize=100",
+            "/api/v1/Reports?pageNumber=1&pageSize=100",
             TestContext.Current.CancellationToken);
         var reports = await ApiTestClient.ReadDataAsync<PaginatedList<ReportListItemResponse>>(
             response,
@@ -361,12 +361,12 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
     }
 
     [Theory]
-    [InlineData("/api/Reports?pageNumber=0")]
-    [InlineData("/api/Reports?pageNumber=-1")]
-    [InlineData("/api/Reports?pageNumber=2147483647&pageSize=100")]
-    [InlineData("/api/Reports?pageSize=0")]
-    [InlineData("/api/Reports?pageSize=-1")]
-    [InlineData("/api/Reports?pageSize=101")]
+    [InlineData("/api/v1/Reports?pageNumber=0")]
+    [InlineData("/api/v1/Reports?pageNumber=-1")]
+    [InlineData("/api/v1/Reports?pageNumber=2147483647&pageSize=100")]
+    [InlineData("/api/v1/Reports?pageSize=0")]
+    [InlineData("/api/v1/Reports?pageSize=-1")]
+    [InlineData("/api/v1/Reports?pageSize=101")]
     public async Task ListReports_WithInvalidPagingParameters_ShouldReturnBadRequest(string requestUri)
     {
         var response = await _client.GetAsync(requestUri, TestContext.Current.CancellationToken);
@@ -401,7 +401,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         _client.DefaultRequestHeaders.Authorization = null;
 
         var response = await _client.GetAsync(
-            $"/api/Reports/{createdReport.Id}",
+            $"/api/v1/Reports/{createdReport.Id}",
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -425,11 +425,11 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         _client.DefaultRequestHeaders.Authorization = null;
 
         var firstResponse = await _client.PostAsync(
-            $"/api/Reports/{createdReport.Id}/confirmations",
+            $"/api/v1/Reports/{createdReport.Id}/confirmations",
             content: null,
             TestContext.Current.CancellationToken);
         var secondResponse = await _client.PostAsync(
-            $"/api/Reports/{createdReport.Id}/confirmations",
+            $"/api/v1/Reports/{createdReport.Id}/confirmations",
             content: null,
             TestContext.Current.CancellationToken);
 
@@ -451,12 +451,12 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         _client.DefaultRequestHeaders.Authorization = null;
 
         var response = await _client.PutAsJsonAsync(
-            $"/api/Reports/{createdReport.Id}/status",
+            $"/api/v1/Reports/{createdReport.Id}/status",
             new UpdateReportStatusRequest(ReportStatus.InProgress),
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        await AssertUnauthorizedProblemDetailsAsync(response, $"/api/Reports/{createdReport.Id}/status");
+        await AssertUnauthorizedProblemDetailsAsync(response, $"/api/v1/Reports/{createdReport.Id}/status");
     }
 
     [Fact]
@@ -466,7 +466,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         var createdReport = await CreateReportAsync();
 
         var response = await _client.PutAsJsonAsync(
-            $"/api/Reports/{createdReport.Id}/status",
+            $"/api/v1/Reports/{createdReport.Id}/status",
             new UpdateReportStatusRequest(ReportStatus.InProgress),
             TestContext.Current.CancellationToken);
 
@@ -488,7 +488,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
         await AuthenticateAsync("different-user@example.com");
 
         var response = await _client.PutAsJsonAsync(
-            $"/api/Reports/{createdReport.Id}/status",
+            $"/api/v1/Reports/{createdReport.Id}/status",
             new UpdateReportStatusRequest(ReportStatus.Resolved),
             TestContext.Current.CancellationToken);
 
@@ -496,7 +496,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             HttpStatusCode.Forbidden,
             "Forbidden.",
             "Only the report creator can update status.",
-            $"/api/Reports/{createdReport.Id}/status",
+            $"/api/v1/Reports/{createdReport.Id}/status",
             "https://tools.ietf.org/html/rfc7231#section-6.5.3");
     }
 
@@ -507,7 +507,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
 
         var reportId = Guid.NewGuid();
         var response = await _client.PutAsJsonAsync(
-            $"/api/Reports/{reportId}/status",
+            $"/api/v1/Reports/{reportId}/status",
             new UpdateReportStatusRequest(ReportStatus.Resolved),
             TestContext.Current.CancellationToken);
 
@@ -515,7 +515,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
             HttpStatusCode.NotFound,
             "Resource not found.",
             "Report was not found.",
-            $"/api/Reports/{reportId}/status",
+            $"/api/v1/Reports/{reportId}/status",
             "https://tools.ietf.org/html/rfc7231#section-6.5.4");
     }
 
@@ -529,7 +529,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
 
         _client.SetBearerToken(auth.Token);
         var signatureResponse = await _client.PostAsync(
-            "/api/Reports/images/upload-signature",
+            "/api/v1/Reports/images/upload-signature",
             content: null,
             TestContext.Current.CancellationToken);
         var signature = await ApiTestClient.ReadDataAsync<ReportImageUploadSignatureResponse>(
@@ -567,7 +567,7 @@ public sealed class ReportEndpointTests : IClassFixture<TestWebApplicationFactor
     private async Task<ReportResponse> CreateReportAsync()
     {
         var response = await _client.PostAsJsonAsync(
-            "/api/Reports",
+            "/api/v1/Reports",
             CreateReportRequest(),
             TestContext.Current.CancellationToken);
 

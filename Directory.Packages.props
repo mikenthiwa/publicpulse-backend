@@ -3,6 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="Asp.Versioning.Http" Version="10.0.0" />
     <PackageVersion Include="FluentAssertions" Version="8.9.0" />
     <PackageVersion Include="CloudinaryDotNet" Version="1.29.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />

@@ -1,15 +1,17 @@
 using System.Reflection;
+using Asp.Versioning.Builder;
 
 namespace Web.Infrastructure;
 
 public static class WebApplicationExtensions
 {
-    public static RouteGroupBuilder MapGroup(this WebApplication app, EndpointGroupBase group)
+    public static RouteGroupBuilder MapGroup(this WebApplication app, EndpointGroupBase endpointGroup)
     {
-        var groupName = group.GetType().Name;
+        var groupName = endpointGroup.GetType().Name;
 
-        return app
-            .MapGroup($"/api/{groupName}")
+        return app.NewVersionedApi(groupName)
+            .MapGroup($"/api/v{{version:apiVersion}}/{groupName}")
+            .HasApiVersion(1.0)
             .WithTags(groupName);
     }
 

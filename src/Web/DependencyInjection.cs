@@ -1,4 +1,5 @@
 using System.Reflection;
+using Asp.Versioning;
 using CloudinaryDotNet;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
@@ -35,6 +36,12 @@ public static class DependencyInjection
         var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is required.");
 
         builder.Services.AddOpenApi();
+        builder.Services.AddApiVersioning(options =>
+        {
+            options.DefaultApiVersion = new ApiVersion(1);
+            options.ReportApiVersions = true;
+            options.ApiVersionReader = new UrlSegmentApiVersionReader();
+        });
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddCors(options =>
         {
@@ -56,6 +63,7 @@ public static class DependencyInjection
         });
         builder.Services.AddSwaggerGen(options =>
         {
+            options.DocumentFilter<ApiVersionDocumentFilter>();
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Name = "Authorization",
