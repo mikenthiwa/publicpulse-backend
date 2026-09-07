@@ -31,14 +31,14 @@ public sealed class LocationEndpointTests : IClassFixture<TestWebApplicationFact
         using var client = _factory.CreateClient();
 
         var response = await client.GetAsync(
-            $"/api/Locations/reverse?latitude={latitude}&longitude={longitude}",
+            $"/api/v1/Locations/reverse?latitude={latitude}&longitude={longitude}",
             TestContext.Current.CancellationToken);
 
         await response.ShouldBeProblemDetailsAsync(
             HttpStatusCode.BadRequest,
             "Bad request.",
             detail,
-            "/api/Locations/reverse",
+            "/api/v1/Locations/reverse",
             "https://tools.ietf.org/html/rfc7231#section-6.5.1");
     }
 
@@ -48,7 +48,7 @@ public sealed class LocationEndpointTests : IClassFixture<TestWebApplicationFact
         using var client = _factory.CreateClient();
 
         var response = await client.GetAsync(
-            "/api/Locations/reverse?latitude=-1.286389&longitude=36.817223",
+            "/api/v1/Locations/reverse?latitude=-1.286389&longitude=36.817223",
             TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -80,14 +80,14 @@ public sealed class LocationEndpointTests : IClassFixture<TestWebApplicationFact
             .CreateClient();
 
         var response = await client.GetAsync(
-            "/api/Locations/reverse?latitude=-1.286389&longitude=36.817223",
+            "/api/v1/Locations/reverse?latitude=-1.286389&longitude=36.817223",
             TestContext.Current.CancellationToken);
 
         await response.ShouldBeProblemDetailsAsync(
             HttpStatusCode.BadGateway,
             "Upstream provider failed.",
             "Reverse geocoding failed.",
-            "/api/Locations/reverse",
+            "/api/v1/Locations/reverse",
             "https://tools.ietf.org/html/rfc7231#section-6.6.3");
     }
 

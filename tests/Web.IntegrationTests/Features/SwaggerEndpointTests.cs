@@ -35,12 +35,13 @@ public sealed class SwaggerEndpointTests : IClassFixture<DevelopmentWebApplicati
             await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken));
         var paths = document.RootElement.GetProperty("paths");
 
-        GetResponseCodes(paths, "/api/Locations/reverse", "get")
+        GetResponseCodes(paths, "/api/v1/Locations/reverse", "get")
             .Should().BeEquivalentTo(["200", "400", "502"]);
-        GetResponseCodes(paths, "/api/Reports/{id}", "get")
+        GetResponseCodes(paths, "/api/v1/Reports/{id}", "get")
             .Should().BeEquivalentTo(["200", "404"]);
-        GetResponseCodes(paths, "/api/Reports/{id}/status", "put")
+        GetResponseCodes(paths, "/api/v1/Reports/{id}/status", "put")
             .Should().BeEquivalentTo(["200", "401", "403", "404"]);
+        paths.TryGetProperty("/api/Locations/reverse", out _).Should().BeFalse();
     }
 
     private static string[] GetResponseCodes(

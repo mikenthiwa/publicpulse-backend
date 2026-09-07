@@ -19,14 +19,14 @@ public static class ApiTestClient
         CancellationToken cancellationToken)
     {
         var registerResponse = await client.PostAsJsonAsync(
-            "/api/Auth/register",
+            "/api/v1/Auth/register",
             new RegisterRequest(email, password),
             cancellationToken);
 
         registerResponse.EnsureSuccessStatusCode();
 
         var loginResponse = await client.PostAsJsonAsync(
-            "/api/Auth/login",
+            "/api/v1/Auth/login",
             new LoginRequest(email, password),
             cancellationToken);
 

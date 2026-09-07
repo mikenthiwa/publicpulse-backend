@@ -23,15 +23,12 @@ public class Reports : EndpointGroupBase
             .AddFluentValidationAutoValidation()
             .ProducesProblem(StatusCodes.Status400BadRequest);
         group.MapGet("/{id:guid}", GetReportById)
-            .WithName(nameof(GetReportById))
             .ProducesProblem(StatusCodes.Status404NotFound);
         group.MapPost("/images/upload-signature", CreateImageUploadSignature)
-            .WithName(nameof(CreateImageUploadSignature))
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status502BadGateway)
             .RequireAuthorization();
         group.MapPost("", CreateReport)
-            .WithName(nameof(CreateReport))
             .AddFluentValidationAutoValidation()
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
@@ -39,10 +36,8 @@ public class Reports : EndpointGroupBase
             .ProducesProblem(StatusCodes.Status502BadGateway)
             .RequireAuthorization();
         group.MapPost("/{id:guid}/confirmations", ConfirmReport)
-            .WithName(nameof(ConfirmReport))
             .ProducesProblem(StatusCodes.Status404NotFound);
         group.MapPut("/{id:guid}/status", UpdateReportStatus)
-            .WithName(nameof(UpdateReportStatus))
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)

@@ -19,7 +19,7 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
     public async Task Register_ShouldCreateUserAndReturnToken()
     {
         var response = await _client.PostAsJsonAsync(
-            "/api/Auth/register",
+            "/api/v1/Auth/register",
             new RegisterRequest("citizen@example.com", "Password123!"),
             TestContext.Current.CancellationToken);
 
@@ -41,11 +41,11 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
         var request = new RegisterRequest("duplicate@example.com", "Password123!");
 
         var firstResponse = await _client.PostAsJsonAsync(
-            "/api/Auth/register",
+            "/api/v1/Auth/register",
             request,
             TestContext.Current.CancellationToken);
         var secondResponse = await _client.PostAsJsonAsync(
-            "/api/Auth/register",
+            "/api/v1/Auth/register",
             request,
             TestContext.Current.CancellationToken);
 
@@ -54,7 +54,7 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
             HttpStatusCode.BadRequest,
             "Bad request.",
             "Email is already registered.",
-            "/api/Auth/register",
+            "/api/v1/Auth/register",
             "https://tools.ietf.org/html/rfc7231#section-6.5.1");
     }
 
@@ -70,7 +70,7 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
     public async Task Register_WithInvalidInput_ShouldReturnBadRequest(RegisterRequest request)
     {
         var response = await _client.PostAsJsonAsync(
-            "/api/Auth/register",
+            "/api/v1/Auth/register",
             request,
             TestContext.Current.CancellationToken);
 
@@ -78,7 +78,7 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
             HttpStatusCode.BadRequest,
             "One or more validation errors occurred.",
             "One or more validation failures have occurred.",
-            "/api/Auth/register",
+            "/api/v1/Auth/register",
             "https://tools.ietf.org/html/rfc7231#section-6.5.1");
 
         problemDetails.Errors.Should().NotBeNullOrEmpty();
@@ -94,7 +94,7 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
             TestContext.Current.CancellationToken);
 
         var response = await _client.PostAsJsonAsync(
-            "/api/Auth/login",
+            "/api/v1/Auth/login",
             new LoginRequest("login@example.com", "Password123!"),
             TestContext.Current.CancellationToken);
 
@@ -117,7 +117,7 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
             TestContext.Current.CancellationToken);
 
         var response = await _client.PostAsJsonAsync(
-            "/api/Auth/login",
+            "/api/v1/Auth/login",
             new LoginRequest("invalid-login@example.com", "WrongPassword123!"),
             TestContext.Current.CancellationToken);
 
@@ -125,7 +125,7 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
             HttpStatusCode.BadRequest,
             "Bad request.",
             "Invalid email or password.",
-            "/api/Auth/login",
+            "/api/v1/Auth/login",
             "https://tools.ietf.org/html/rfc7231#section-6.5.1");
     }
 
@@ -141,7 +141,7 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
     public async Task Login_WithInvalidInput_ShouldReturnBadRequest(LoginRequest request)
     {
         var response = await _client.PostAsJsonAsync(
-            "/api/Auth/login",
+            "/api/v1/Auth/login",
             request,
             TestContext.Current.CancellationToken);
 
@@ -149,7 +149,7 @@ public sealed class AuthEndpointTests : IClassFixture<TestWebApplicationFactory>
             HttpStatusCode.BadRequest,
             "One or more validation errors occurred.",
             "One or more validation failures have occurred.",
-            "/api/Auth/login",
+            "/api/v1/Auth/login",
             "https://tools.ietf.org/html/rfc7231#section-6.5.1");
 
         problemDetails.Errors.Should().NotBeNullOrEmpty();
