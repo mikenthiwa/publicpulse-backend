@@ -1,5 +1,4 @@
 using System.Reflection;
-using Asp.Versioning.Builder;
 
 namespace Web.Infrastructure;
 
