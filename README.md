@@ -485,3 +485,21 @@ No license file is currently included in this repository.
 - `src/Web/Features/Reports` - Reports, confirmations, status, and report service
 - `tests/Web.UnitTests` - Unit tests for records, helpers, and isolated behavior
 - `tests/Web.IntegrationTests` - Integration tests for HTTP endpoints and API middleware
+
+## Logging
+
+The API writes JSON logs to the console with UTC timestamps and request scopes. Run
+`dotnet run --project src/Web/Web.csproj` and inspect the application output.
+Application logs start at Information; ASP.NET Core logs start at Warning.
+
+Request events include method, path (without query string), status and elapsed
+milliseconds. Scopes include RequestId, TraceId and ProblemDetailsTraceId; search
+ProblemDetailsTraceId using the traceId returned in an error response. ReportCreated
+records ReportId and Status immediately after persistence succeeds. RequestCancelled
+and RequestFailed distinguish interrupted requests from completed responses.
+
+For example, filter captured console output with
+`jq -R 'fromjson? | select(.EventId == 1003)'` for report creation, or
+`jq -R 'fromjson? | select(.LogLevel == "Error")'` for errors. Console logs are not
+persisted by the application; the hosting environment owns collection and retention.
+New request/business events omit headers, query strings, bodies and credentials.

@@ -8,6 +8,8 @@ builder.AddWebServices();
 
 var app = builder.Build();
 
+app.UseMiddleware<RequestLoggingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
