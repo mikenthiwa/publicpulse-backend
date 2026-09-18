@@ -36,7 +36,7 @@ RUN ConnectionStrings__DefaultConnection="Host=localhost;Database=publicpulse;Us
 FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION} AS runtime-base
 USER root
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends curl \
+    && apt-get install --yes --no-install-recommends curl postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
