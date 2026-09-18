@@ -23,7 +23,9 @@ An API for reporting damaged roads and public infrastructure issues.
 
 ## Documentation
 
-Swagger UI is available at `http://localhost:5000/swagger` when running in Development.
+- [Development API documentation (Swagger UI)](https://publicpulse-api-dev-gcgvdha4h0b0hha9.westus3-01.azurewebsites.net/swagger/index.html)
+- [Local API documentation (Swagger UI)](http://localhost:5000/swagger), available when running locally in Development.
+
 See [CAPSTONE.md](CAPSTONE.md) for project context.
 
 ### Authentication
