@@ -16,5 +16,8 @@ public static class TestEnvironmentInitializer
             "Jwt__SigningKey",
             "public-pulse-tests-signing-key-with-enough-length");
         Environment.SetEnvironmentVariable("Jwt__ExpiryMinutes", "60");
+        Environment.SetEnvironmentVariable(
+            "APPLICATIONINSIGHTS_CONNECTION_STRING",
+            null);
     }
 }
