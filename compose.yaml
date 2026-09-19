@@ -59,6 +59,10 @@ services:
       Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN_0:-http://localhost:3000}
       Cors__AllowedOrigins__1: ${CORS_ALLOWED_ORIGIN_1:-http://localhost:3001}
       SeedData__Enabled: "false"
+      APPLICATIONINSIGHTS_CONNECTION_STRING: ${APPLICATIONINSIGHTS_CONNECTION_STRING:-}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-publicpulse-api}
+      OTEL_TRACES_SAMPLER: ${OTEL_TRACES_SAMPLER:-microsoft.rate_limited}
+      OTEL_TRACES_SAMPLER_ARG: ${OTEL_TRACES_SAMPLER_ARG:-0.1}
     ports:
       - "${API_PORT:-5000}:8080"
     healthcheck:

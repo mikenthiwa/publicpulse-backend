@@ -35,6 +35,7 @@ public static class DependencyInjection
     {
         var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is required.");
 
+        builder.AddObservability();
         builder.Services.AddOpenApi();
         builder.Services.AddApiVersioning(options =>
         {
