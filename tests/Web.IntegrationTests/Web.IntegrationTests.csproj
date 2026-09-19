@@ -24,4 +24,8 @@
     <ProjectReference Include="..\..\src\Web\Web.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="../Web.UnitTests/Infrastructure/CapturingLoggerProvider.cs" Link="Helpers/CapturingLoggerProvider.cs" />
+  </ItemGroup>
+
 </Project>

@@ -9,7 +9,8 @@ namespace Web.Features.Reports.CreateReport;
 public class CreateReportHandler(
     ApplicationDbContext dbContext,
     IReportImageCloudinaryService imageCloudinaryService,
-    ICurrentUser currentUser)
+    ICurrentUser currentUser,
+    ILogger<CreateReportHandler> logger)
 {
     public async Task<ApplicationResult<ReportResponse>> HandleAsync(
         CreateReportRequest request,
@@ -76,6 +77,9 @@ public class CreateReportHandler(
 
         dbContext.Reports.Add(report);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(new EventId(1003, "ReportCreated"),
+            "Report {ReportId} created with status {Status}", report.Id, report.Status);
 
         await dbContext.Entry(report)
             .Reference(currentReport => currentReport.Category)
